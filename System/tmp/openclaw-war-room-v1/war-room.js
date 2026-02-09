@@ -1,3 +1,5 @@
+const conciseMode = true;
+
 const state = {
   agents: [
     { id: 'main', name: 'Main', role: 'Raid Lead', classKey: 'paladin', mode: 'active', hp: 96, mp: 82, cast: 'Coordinating pull', threat: 62, group: 1, debuffs: ['silence'], last: 'processing session events' },
@@ -92,6 +94,30 @@ const classColors = {
 function modeDot(mode) { return mode === 'active' ? 'active' : mode === 'idle' ? 'idle' : 'stale'; }
 function now() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
 
+function classifyStatus(text = '') {
+  if (/error|failed|timeout|stale|critical/i.test(text)) return 'FAIL';
+  return 'SUCCESS';
+}
+
+function compactChange(text = '') {
+  const cleaned = text
+    .replace(/\s+/g, ' ')
+    .replace(/^\[.*?\]\s*/i, '')
+    .replace(/^(read|exec)\s+/i, '')
+    .replace(/tool\s+\d+:\d+\s*/i, '')
+    .trim();
+
+  if (!cleaned) return 'No material change.';
+  if (cleaned.length <= 96) return cleaned;
+  return `${cleaned.slice(0, 93)}...`;
+}
+
+function decisionHint(status, text = '') {
+  if (status === 'FAIL') return 'Decide: retry now, inspect logs, or disable job.';
+  if (/queued|waiting|blocked/i.test(text)) return 'Decide: reprioritize or leave queued.';
+  return 'None.';
+}
+
 function renderFilters() {
   el.filters.innerHTML = filterOptions.map(name =>
     `<button class="filter-chip ${state.feedFilter === name ? 'active' : ''}" data-filter="${name}">${name}</button>`
@@ -164,9 +190,19 @@ function render() {
       ? state.events.filter(e => /error|failed|timeout|stale/i.test(e.text))
       : state.events.filter(e => e.agent === state.feedFilter);
 
-  el.feed.innerHTML = filteredEvents.slice(0, 120).map(evt => `
-    <article class="feed-item"><div class="meta">${evt.time} • ${evt.agent} • ${evt.stream}</div><div class="text">${evt.text}</div></article>
-  `).join('');
+  el.feed.innerHTML = filteredEvents.slice(0, 60).map(evt => {
+    if (!conciseMode) {
+      return `<article class="feed-item"><div class="meta">${evt.time} • ${evt.agent} • ${evt.stream}</div><div class="text">${evt.text}</div></article>`;
+    }
+
+    return `
+      <article class="feed-item">
+        <div class="meta">${evt.time} • ${evt.agent}</div>
+        <div class="text"><strong>${evt.status}</strong> • changed: ${evt.changed}</div>
+        <div class="text">need decision: ${evt.decision}</div>
+      </article>
+    `;
+  }).join('');
 
   el.codexTasks.innerHTML = state.codexTasks.map((t, i) => `
     <article class="task-row ${state.selectedTask === i ? 'active' : ''}" data-task-index="${i}" role="option" aria-selected="${state.selectedTask === i ? 'true' : 'false'}" tabindex="0">
@@ -229,17 +265,23 @@ function render() {
 }
 
 function pushEvent(agent, stream, text) {
-  state.events.unshift({ time: now(), agent, stream, text });
+  const status = classifyStatus(text);
+  const changed = compactChange(text);
+  const decision = decisionHint(status, text);
+
+  if (conciseMode && /name:\s|description:\s|quick start|commands|examples|license/i.test(text)) return;
+
+  state.events.unshift({ time: now(), agent, stream, text, status, changed, decision });
   if (state.events.length > 240) state.events.length = 240;
 
   const targetIdx = state.codexTasks.findIndex(t => t.title.toLowerCase().includes('gateway'));
   const idx = targetIdx >= 0 ? targetIdx : state.selectedTask;
   const thread = state.codexTasks[idx];
-  thread.messages.push({ who: agent, line: text });
+  thread.messages.push({ who: agent, line: conciseMode ? `${status} | ${changed}` : text });
   if (thread.messages.length > 80) thread.messages.shift();
 
   if (idx !== state.selectedTask) thread.unread = Math.min((thread.unread || 0) + 1, 99);
-  thread.preview = text;
+  thread.preview = conciseMode ? `${status} | ${changed}` : text;
 
   render();
 }
