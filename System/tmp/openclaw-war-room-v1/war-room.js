@@ -13,8 +13,9 @@ const state = {
   ],
   codexTasks: [
     { title: 'Evaluate Voxyz info quality', age: '32m', scorePos: '', scoreNeg: '' },
-    { title: 'Evaluate tweet ideas for openclaw', age: '1h', scorePos: '+983', scoreNeg: '-5' },
-    { title: 'Explain App Store Connect CLI uses', age: '1h', scorePos: '', scoreNeg: '' },
+    { title: 'Tweet ideas for OpenClaw', age: '1h', scorePos: '+983', scoreNeg: '-5' },
+    { title: 'App Store Connect CLI uses', age: '1h', scorePos: '', scoreNeg: '' },
+    { title: 'Gateway relay wiring', age: '2h', scorePos: '', scoreNeg: '' },
   ],
   codexHistory: [
     { who: 'Main', line: 'Started war-room iteration and visual pass.' },
@@ -109,8 +110,8 @@ function render() {
     });
   });
 
-  el.codexHistory.innerHTML = state.codexHistory.slice(-16).reverse().map(item => `
-    <article class="hist-item">
+  el.codexHistory.innerHTML = state.codexHistory.slice(-24).map(item => `
+    <article class="hist-item ${item.who === 'Main' ? 'user' : ''}">
       <div class="who">${item.who}</div>
       <div class="line">${item.line}</div>
     </article>
