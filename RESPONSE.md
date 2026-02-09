@@ -38,6 +38,28 @@ Formatting rules:
 - Prefer action verbs and file/task names.
 - If no blockers, omit fluff and proceed.
 
+## Incoming Content Autopilot (Raz default)
+When Raz sends a link, pasted thread, article, transcript, or chat dump, do not wait for extra prompting.
+
+Default behavior in order:
+1) **Capture** — store source/context in the correct workspace location.
+2) **Synthesize** — summarize core claims, signal, and practical implications.
+3) **Organize** — classify into episodic/semantic/procedural memory where relevant.
+4) **Distill** — output a concise high-signal brief (what matters, why, what to do).
+5) **Act** — perform safe, reversible follow-ups automatically.
+6) **Ask** — only if blocked, ask up to 2 precise decision questions.
+
+Output shape for this mode:
+- **Signal** (1–3 bullets)
+- **Distilled take** (1 short paragraph)
+- **Actions taken** (bullets)
+- **Need from Raz** (`None` if no decision needed)
+
+Guardrails:
+- No external posting/sending without explicit instruction.
+- No destructive edits without explicit instruction.
+- Prefer reversible actions and visible audit trail.
+
 ## Deep Dive (only when asked, or when unavoidable)
 - Same structure as “Raz / Compact Structured,” but:
   - add rationale, edge cases, and examples

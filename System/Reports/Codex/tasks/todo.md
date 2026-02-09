@@ -428,3 +428,12 @@
 - [x] Heartbeat cadence now supports checks every 2 hours.
 - [x] Added Memory Manager detection/snapshot/organize sequence with compatibility paths and graceful skip if scripts are missing.
 - [x] Existing runtime health, memory drift, calendar, and high-priority message checks remain intact.
+
+## Proactive Intake Default (2026-02-09)
+- [x] Add explicit incoming-content autopilot policy to `RESPONSE.md`.
+- [x] Persist user preference for proactive link/thread handling in `USER.md`.
+- [x] Keep external/destructive actions approval-gated.
+
+## Review (2026-02-09) - Proactive Intake Default
+- [x] Agent now defaults to capture -> synthesize -> organize -> distill -> act -> ask for all user-shared content artifacts.
+- [x] Blocking questions are constrained to max 2; otherwise proceed autonomously with reversible actions.
