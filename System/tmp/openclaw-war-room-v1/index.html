@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenClaw War Room v1</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <h1>OPENCLAW WAR ROOM</h1>
+          <p id="subline">Live operator wallboard (v1 visual pass)</p>
+        </div>
+        <div class="status-cluster">
+          <span id="conn-pill" class="pill offline">DEMO MODE</span>
+          <span class="pill">Agents <strong id="agent-count">0</strong></span>
+          <span class="pill">Events <strong id="event-count">0</strong></span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel roster">
+          <h2>Agent Presence</h2>
+          <div id="roster-grid" class="roster-grid"></div>
+        </section>
+
+        <section class="panel feed">
+          <h2>Live Event Feed</h2>
+          <div id="feed-list" class="feed-list"></div>
+        </section>
+
+        <section class="panel right-rail">
+          <h2>Mission Pulse</h2>
+          <div id="mission-list" class="mission-list"></div>
+
+          <h3>Design Notes</h3>
+          <ul>
+            <li>This is an original visual language (not VoxYZ assets).</li>
+            <li>Built for read-only wallboard mode.</li>
+            <li>Phase 2: wire to Gateway relay for true live stream.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./war-room.js"></script>
+  </body>
+</html>
