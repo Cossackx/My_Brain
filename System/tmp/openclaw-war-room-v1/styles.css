@@ -77,9 +77,62 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
 .roster-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-1); }
 .agent-card { border: 1px solid #243a58; background: #0d1728; border-radius: 10px; padding: 10px; min-height: 92px; }
 .agent-head { display: flex; justify-content: space-between; align-items: center; }
-.agent-name { font-weight: 700; font-size: 0.96rem; color: #f3f7ff; }
+.agent-ident { display: flex; align-items: center; gap: 8px; }
+.agent-name { font-weight: 700; font-size: 0.96rem; color: #f3f7ff; text-shadow: 0 0 8px rgba(0,0,0,.4); }
 .agent-role { color: var(--muted); font-size: 0.78rem; }
 .agent-last { margin-top: 8px; color: #b6caed; font-size: .82rem; }
+
+.raid-frame {
+  border: 1px solid #6b5b2d;
+  background: linear-gradient(180deg, #1c1a12 0%, #111826 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 221, 145, .16), 0 8px 20px rgba(0, 0, 0, .35);
+}
+.role-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid #967a3b;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(0,0,0,.35);
+}
+.role-icon.tank { background: #4c6aff; }
+.role-icon.healer { background: #3ad17d; }
+.role-icon.dps { background: #e74d4d; }
+
+.raid-bars { margin-top: 8px; display: grid; gap: 6px; }
+.bar {
+  position: relative;
+  height: 16px;
+  border-radius: 3px;
+  background: #0a0e16;
+  border: 1px solid #3f3b2a;
+  overflow: hidden;
+}
+.bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-right: 1px solid rgba(255,255,255,.3);
+}
+.bar.hp span { background: linear-gradient(90deg, #1f8f45, #49d16f); }
+.bar.mp span { background: linear-gradient(90deg, #1f4b9f, #4a86ff); }
+.bar em {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-size: .68rem;
+  color: #f0f5ff;
+  text-shadow: 0 1px 2px #000;
+}
+.raid-cast {
+  margin-top: 7px;
+  font-size: .74rem;
+  color: #ffdc93;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
 
 .kanban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); }
 .lane { border: 1px solid #274469; border-radius: 10px; padding: 8px; background: #0d1a2d; min-height: 220px; }

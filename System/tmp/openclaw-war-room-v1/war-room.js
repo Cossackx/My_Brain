@@ -1,9 +1,9 @@
 const state = {
   agents: [
-    { id: 'main', name: 'Main', role: 'Coordinator', mode: 'active', last: 'processing session events' },
-    { id: 'research', name: 'Research', role: 'Signal Analyst', mode: 'idle', last: 'waiting for trigger' },
-    { id: 'ops', name: 'Ops', role: 'Runtime Operator', mode: 'active', last: 'watching gateway health' },
-    { id: 'memory', name: 'Memory', role: 'Context Curator', mode: 'idle', last: 'digest scheduled' },
+    { id: 'main', name: 'Main', role: 'Raid Lead', classKey: 'paladin', mode: 'active', hp: 96, mp: 82, cast: 'Coordinating pull', last: 'processing session events' },
+    { id: 'research', name: 'Research', role: 'Ranged DPS', classKey: 'mage', mode: 'idle', hp: 81, mp: 94, cast: 'Scanning signals', last: 'waiting for trigger' },
+    { id: 'ops', name: 'Ops', role: 'Tank', classKey: 'warrior', mode: 'active', hp: 99, mp: 38, cast: 'Stabilizing gateway', last: 'watching gateway health' },
+    { id: 'memory', name: 'Memory', role: 'Healer', classKey: 'priest', mode: 'idle', hp: 88, mp: 73, cast: 'Curating digest', last: 'digest scheduled' },
   ],
   tasks: [
     { title: 'Wire real event relay', owner: 'Ops', state: 'queued' },
@@ -77,6 +77,18 @@ const lanes = ['queued', 'running', 'blocked', 'done'];
 const laneTitle = { queued: 'Queued', running: 'Running', blocked: 'Blocked', done: 'Done' };
 const filterOptions = ['All', 'Main', 'Ops', 'Research', 'Memory', 'System', 'Errors'];
 
+const classColors = {
+  paladin: '#f58cba',
+  mage: '#3fc7eb',
+  warrior: '#c79c6e',
+  priest: '#ffffff',
+  rogue: '#fff468',
+  druid: '#ff7d0a',
+  shaman: '#0070dd',
+  warlock: '#8788ee',
+  hunter: '#abd473',
+};
+
 function modeDot(mode) { return mode === 'active' ? 'active' : mode === 'idle' ? 'idle' : 'stale'; }
 function now() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
 
@@ -94,12 +106,30 @@ function renderFilters() {
 }
 
 function render() {
-  el.roster.innerHTML = state.agents.map(a => `
-    <article class="agent-card">
-      <div class="agent-head"><div><div class="agent-name">${a.name}</div><div class="agent-role">${a.role}</div></div>
-      <div class="agent-role"><span class="dot ${modeDot(a.mode)}"></span>${a.mode}</div></div>
+  el.roster.innerHTML = state.agents.map(a => {
+    const hp = Math.max(0, Math.min(100, a.hp ?? 90));
+    const mp = Math.max(0, Math.min(100, a.mp ?? 70));
+    const classColor = classColors[a.classKey] || '#d9e5ff';
+    return `
+    <article class="agent-card raid-frame ${a.mode}">
+      <div class="agent-head">
+        <div class="agent-ident">
+          <span class="role-icon ${a.mode === 'active' ? 'tank' : a.role.toLowerCase().includes('healer') ? 'healer' : 'dps'}"></span>
+          <div>
+            <div class="agent-name" style="color:${classColor}">${a.name}</div>
+            <div class="agent-role">${a.role}</div>
+          </div>
+        </div>
+        <div class="agent-role"><span class="dot ${modeDot(a.mode)}"></span>${a.mode}</div>
+      </div>
+      <div class="raid-bars">
+        <div class="bar hp"><span style="width:${hp}%"></span><em>HP ${hp}%</em></div>
+        <div class="bar mp"><span style="width:${mp}%"></span><em>MP ${mp}%</em></div>
+      </div>
+      <div class="raid-cast">Casting: ${a.cast || 'Ready'}</div>
       <div class="agent-last">${a.last}</div>
-    </article>`).join('');
+    </article>`;
+  }).join('');
 
   el.kanban.innerHTML = lanes.map(l => {
     const cards = state.tasks.filter(t => t.state === l)
