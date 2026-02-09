@@ -63,6 +63,8 @@ const el = {
   filters: document.getElementById('feed-filters'),
   codexTasks: document.getElementById('codex-task-list'),
   codexHistory: document.getElementById('codex-history'),
+  codexInput: document.getElementById('codex-input'),
+  codexOpenTitle: document.getElementById('codex-open-title'),
   agents: document.getElementById('agent-count'),
   events: document.getElementById('event-count'),
   pulseActive: document.getElementById('pulse-active'),
@@ -116,7 +118,7 @@ function render() {
   `).join('');
 
   el.codexTasks.innerHTML = state.codexTasks.map((t, i) => `
-    <article class="task-row ${state.selectedTask === i ? 'active' : ''}" data-task-index="${i}">
+    <article class="task-row ${state.selectedTask === i ? 'active' : ''}" data-task-index="${i}" role="option" aria-selected="${state.selectedTask === i ? 'true' : 'false'}" tabindex="0">
       <div class="task-row-top">
         <div class="task-title">${t.title}</div>
         <span class="task-age">${t.age}</span>
@@ -130,14 +132,33 @@ function render() {
   `).join('');
 
   el.codexTasks.querySelectorAll('.task-row').forEach(row => {
-    row.addEventListener('click', () => {
+    const openThread = () => {
       state.selectedTask = Number(row.getAttribute('data-task-index') || 0);
       state.codexTasks[state.selectedTask].unread = 0;
       render();
+    };
+
+    row.addEventListener('click', openThread);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openThread();
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = row.nextElementSibling;
+        if (next instanceof HTMLElement) next.focus();
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = row.previousElementSibling;
+        if (prev instanceof HTMLElement) prev.focus();
+      }
     });
   });
 
   const selected = state.codexTasks[state.selectedTask];
+  el.codexOpenTitle.textContent = selected?.title || 'Open chat';
   el.codexHistory.innerHTML = selected.messages.slice(-40).map(item => `
     <article class="hist-item ${item.who === 'Main' ? 'user' : ''}">
       <div class="who">${item.who}</div>
@@ -182,6 +203,24 @@ setInterval(() => {
   const [agent, stream, text] = samples[Math.floor(Math.random() * samples.length)];
   pushEvent(agent, stream, text);
 }, 2600);
+
+if (el.codexInput) {
+  el.codexInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const text = el.codexInput.value.trim();
+    if (!text) return;
+
+    const thread = state.codexTasks[state.selectedTask];
+    thread.messages.push({ who: 'Main', line: text });
+    if (thread.messages.length > 80) thread.messages.shift();
+    thread.preview = text;
+    thread.age = 'now';
+
+    el.codexInput.value = '';
+    render();
+    el.codexHistory.scrollTop = el.codexHistory.scrollHeight;
+  });
+}
 
 renderFilters();
 render();

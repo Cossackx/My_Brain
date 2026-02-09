@@ -62,7 +62,7 @@
                 <button class="tab-btn">CODEX</button>
               </div>
               <p class="codex-label">Chats</p>
-              <div id="codex-task-list" class="codex-task-list"></div>
+              <div id="codex-task-list" class="codex-task-list" role="listbox" aria-label="Chat threads"></div>
               <div class="codex-footer-icons" aria-label="panel controls">
                 <button class="icon-btn" title="New chat">＋</button>
                 <button class="icon-btn" title="Search">⌕</button>
@@ -71,7 +71,7 @@
 
             <section class="codex-main">
               <div class="codex-toolbar">
-                <span>Open chat</span>
+                <span id="codex-open-title">Open chat</span>
                 <div class="toolbar-actions">
                   <button class="icon-btn" title="Refresh">↻</button>
                   <button class="icon-btn" title="Settings">⚙</button>
@@ -80,7 +80,7 @@
               </div>
               <div id="codex-history" class="codex-history"></div>
               <div class="codex-composer" role="group" aria-label="codex composer">
-                <input id="codex-input" type="text" placeholder="Message Codex..." />
+                <input id="codex-input" type="text" placeholder="Message Codex..." aria-label="Message composer" />
                 <div class="composer-meta">
                   <span>GPT-5.3-Codex</span>
                   <span>High</span>
