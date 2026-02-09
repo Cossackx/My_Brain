@@ -9,7 +9,7 @@ Default: be useful, not noisy.
 
 ## Cadence
 - Daytime only (`08:00-22:00` America/New_York), unless urgent.
-- Max once every 4 hours unless explicitly requested.
+- Max once every 2 hours unless explicitly requested.
 - Do not repeat the same alert twice unless severity changed.
 
 ## Checks (in order)
@@ -17,19 +17,29 @@ Default: be useful, not noisy.
    - If the previous cycle had tool/runtime failure text, run a lightweight status check before doing anything else.
    - Alert only if the issue is still active.
 
-2. **Memory pipeline drift**
+2. **Memory management (every 2 hours)**
+   - Run compression detection script if present:
+     - WSL/Linux: `~/.openclaw/skills/memory-manager/detect.sh`
+     - Windows fallback: `C:\Users\aleks\.openclaw\skills\memory-manager\detect.sh` (via bash)
+   - If result is WARNING/CRITICAL, run snapshot script:
+     - `~/.openclaw/skills/memory-manager/snapshot.sh` (or Windows fallback path)
+   - Daily at ~23:00 local: run organizer:
+     - `~/.openclaw/skills/memory-manager/organize.sh` (or Windows fallback path)
+   - If scripts are unavailable, skip silently and continue heartbeat checks.
+
+3. **Memory pipeline drift**
    - Only when sessions were active since last check.
    - Run: `PKM: Sync Agent Memory (once)` workflow (or equivalent scripts) when drift is detected.
    - Alert only on failure or unresolved drift.
 
-3. **Calendar window (24h)**
+4. **Calendar window (24h)**
    - Report only actionable conflicts:
      - overlap/double-booked
      - event starts in <2h and appears unprepared
      - travel-time impossibility
    - Skip routine event summaries.
 
-4. **High-priority unread messages**
+5. **High-priority unread messages**
    - Report only messages requiring a decision or response.
    - Skip newsletters/routine notifications.
 

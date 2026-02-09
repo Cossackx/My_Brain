@@ -418,3 +418,13 @@
 - [x] Added anti-noise policy (`no duplicate alerts unless severity changed`) and concise actionable alert structure.
 - [x] `BONES.md` now contains explicit autonomy boundaries for low-risk autonomous execution vs approval-required actions.
 - [x] Preserved safety guardrails: no external/public sends and no destructive edits without explicit user instruction.
+
+## Heartbeat Compatibility Update: Memory Manager + 2h Cadence (2026-02-09)
+- [x] Update `HEARTBEAT.md` cadence from 4h to 2h.
+- [x] Add compatible Memory Manager check block with WSL/Linux + Windows fallback paths.
+- [x] Preserve existing alert-noise and safety behavior.
+
+## Review (2026-02-09) - Heartbeat Compatibility Update
+- [x] Heartbeat cadence now supports checks every 2 hours.
+- [x] Added Memory Manager detection/snapshot/organize sequence with compatibility paths and graceful skip if scripts are missing.
+- [x] Existing runtime health, memory drift, calendar, and high-priority message checks remain intact.
