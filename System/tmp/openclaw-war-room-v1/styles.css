@@ -104,14 +104,29 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
 .tab-btn.active { color: #f5f9ff; border-bottom: 2px solid #5ea1ff; padding-bottom: 2px; }
 .codex-label { margin: 0 0 8px; color: var(--muted); }
 .codex-task-list { display: grid; gap: 8px; }
-.task-row { border: 1px solid #243857; border-radius: 8px; padding: 8px; background: #0c1628; }
+.task-row { border: 1px solid #243857; border-radius: 8px; padding: 8px; background: #0c1628; cursor: pointer; transition: .15s ease; }
+.task-row:hover { border-color: #3c6496; background: #12213b; transform: translateY(-1px); }
+.task-row.active { border-color: #5ea1ff; box-shadow: 0 0 0 1px rgba(94,161,255,.25) inset; }
 .task-title { font-size: .96rem; color: #f2f7ff; }
 .task-meta { display: flex; justify-content: space-between; font-size: .8rem; margin-top: 4px; color: #95afd8; }
 .task-score.pos { color: #89db79; }
 .task-score.neg { color: #ff8f8f; }
+.codex-footer-icons { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
 
 .codex-main { border: 1px solid #2a3e62; border-radius: 10px; background: #0b1527; display: grid; grid-template-rows: auto 1fr auto; min-height: 430px; }
-.codex-toolbar { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #223552; color: #b4caeb; font-size: .82rem; }
+.codex-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #223552; color: #b4caeb; font-size: .82rem; }
+.toolbar-actions { display: flex; gap: 8px; align-items: center; }
+.icon-btn {
+  border: 1px solid #2a3f62;
+  color: #aac2e7;
+  background: #0f1b2f;
+  border-radius: 6px;
+  width: 26px;
+  height: 24px;
+  font-size: .78rem;
+  cursor: pointer;
+}
+.icon-btn:hover { border-color: #4f7bb4; color: #e5f0ff; }
 .codex-history { padding: 10px; overflow: auto; display: grid; gap: 8px; }
 .hist-item { border: 1px solid #1f304d; border-radius: 8px; background: #0c172a; padding: 8px; }
 .hist-item .who { color: #9fc3ff; font-weight: 700; font-size: .8rem; }

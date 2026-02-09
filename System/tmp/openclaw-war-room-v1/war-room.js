@@ -24,6 +24,7 @@ const state = {
   ],
   events: [],
   feedFilter: 'All',
+  selectedTask: 0,
 };
 
 const el = {
@@ -85,8 +86,8 @@ function render() {
     <article class="feed-item"><div class="meta">${evt.time} • ${evt.agent} • ${evt.stream}</div><div class="text">${evt.text}</div></article>
   `).join('');
 
-  el.codexTasks.innerHTML = state.codexTasks.map(t => `
-    <article class="task-row">
+  el.codexTasks.innerHTML = state.codexTasks.map((t, i) => `
+    <article class="task-row ${state.selectedTask === i ? 'active' : ''}" data-task-index="${i}">
       <div class="task-title">${t.title}</div>
       <div class="task-meta">
         <span>
@@ -97,6 +98,16 @@ function render() {
       </div>
     </article>
   `).join('');
+
+  el.codexTasks.querySelectorAll('.task-row').forEach(row => {
+    row.addEventListener('click', () => {
+      state.selectedTask = Number(row.getAttribute('data-task-index') || 0);
+      const task = state.codexTasks[state.selectedTask];
+      state.codexHistory.push({ who: 'Main', line: `Opened task: ${task.title}` });
+      if (state.codexHistory.length > 60) state.codexHistory.shift();
+      render();
+    });
+  });
 
   el.codexHistory.innerHTML = state.codexHistory.slice(-16).reverse().map(item => `
     <article class="hist-item">
