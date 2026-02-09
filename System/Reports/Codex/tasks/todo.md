@@ -216,6 +216,17 @@
 - [x] Draft a “starter kit” plan: capture → Inbox, task → TaskNotes, docs → Areas + wrapper note.
 - [x] Write a guide note under `System/Docs/Guides/` for repeatable setup.
 
+## Cron Output Leak Debug + Fix (2026-02-09)
+- [x] Identify why a memory-maintenance cron run posted internal skill text.
+- [x] Apply process fix to prevent unnecessary skill-file reads on routine cron/system tasks.
+- [x] Record prevention rule in `System/Reports/Codex/tasks/lessons.md`.
+- [x] Summarize root cause and fix to user.
+
+## Review (2026-02-09) - Cron Output Leak Debug + Fix
+- [x] Root cause: task was routine cron maintenance, but skill matching was over-eager; loading `memory-manager` emitted a long tool-read payload into chat.
+- [x] Fix: tightened behavior rule to skip skill loading unless task clearly requires specialized skill instructions.
+- [x] Added explicit lesson to prevent recurrence.
+
 ## Review
 - [x] Updated Task Board filters and unified Task Board/TaskNotes paths; cleared Task Board cache.
 - [x] Updated SOP/instructions to document TaskNotes as system of record, Task Board as optional inline surface, and `Inbox/` + `Journal/` exclusions.
