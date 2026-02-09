@@ -395,3 +395,15 @@
 - [x] Created dedicated Windows venv at `C:\Users\aleks\.openclaw\venvs\desktop-control` and installed: `pyautogui`, `pillow`, `opencv-python`, `pygetwindow`, `pyperclip`.
 - [x] Captured environment freeze at `System/Reports/Codex/tmp/desktop-control-20260206/venv-freeze.txt` and validated imports (`IMPORT_OK`).
 - [x] VT CLI exists but is not authenticated in this shell (`vt scan` requires API key); ClawHub marketplace scan remains available on the listing.
+
+## Autonomy Upgrade: Heartbeat + Boundaries (2026-02-09)
+- [x] Strengthen `HEARTBEAT.md` with proactive, actionable heartbeat behavior (checks, auto-action policy, alert format).
+- [x] Define explicit act-without-asking guardrails in `BONES.md`.
+- [x] Keep external/destructive actions gated behind explicit approval.
+- [x] Capture review notes.
+
+## Review (2026-02-09) - Autonomy Upgrade: Heartbeat + Boundaries
+- [x] `HEARTBEAT.md` now enforces useful cycles: runtime health quick-check, memory drift repair, conflict-only calendar reporting, decision-only message alerts.
+- [x] Added anti-noise policy (`no duplicate alerts unless severity changed`) and concise actionable alert structure.
+- [x] `BONES.md` now contains explicit autonomy boundaries for low-risk autonomous execution vs approval-required actions.
+- [x] Preserved safety guardrails: no external/public sends and no destructive edits without explicit user instruction.
