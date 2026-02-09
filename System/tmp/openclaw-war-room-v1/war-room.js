@@ -1,9 +1,9 @@
 const state = {
   agents: [
-    { id: 'main', name: 'Main', role: 'Raid Lead', classKey: 'paladin', mode: 'active', hp: 96, mp: 82, cast: 'Coordinating pull', last: 'processing session events' },
-    { id: 'research', name: 'Research', role: 'Ranged DPS', classKey: 'mage', mode: 'idle', hp: 81, mp: 94, cast: 'Scanning signals', last: 'waiting for trigger' },
-    { id: 'ops', name: 'Ops', role: 'Tank', classKey: 'warrior', mode: 'active', hp: 99, mp: 38, cast: 'Stabilizing gateway', last: 'watching gateway health' },
-    { id: 'memory', name: 'Memory', role: 'Healer', classKey: 'priest', mode: 'idle', hp: 88, mp: 73, cast: 'Curating digest', last: 'digest scheduled' },
+    { id: 'main', name: 'Main', role: 'Raid Lead', classKey: 'paladin', mode: 'active', hp: 96, mp: 82, cast: 'Coordinating pull', threat: 62, group: 1, debuffs: ['silence'], last: 'processing session events' },
+    { id: 'research', name: 'Research', role: 'Ranged DPS', classKey: 'mage', mode: 'idle', hp: 81, mp: 94, cast: 'Scanning signals', threat: 21, group: 1, debuffs: ['latency'], last: 'waiting for trigger' },
+    { id: 'ops', name: 'Ops', role: 'Tank', classKey: 'warrior', mode: 'active', hp: 99, mp: 38, cast: 'Stabilizing gateway', threat: 97, group: 1, debuffs: [], last: 'watching gateway health' },
+    { id: 'memory', name: 'Memory', role: 'Healer', classKey: 'priest', mode: 'idle', hp: 88, mp: 73, cast: 'Curating digest', threat: 34, group: 2, debuffs: ['oom'], last: 'digest scheduled' },
   ],
   tasks: [
     { title: 'Wire real event relay', owner: 'Ops', state: 'queued' },
@@ -106,29 +106,50 @@ function renderFilters() {
 }
 
 function render() {
-  el.roster.innerHTML = state.agents.map(a => {
-    const hp = Math.max(0, Math.min(100, a.hp ?? 90));
-    const mp = Math.max(0, Math.min(100, a.mp ?? 70));
-    const classColor = classColors[a.classKey] || '#d9e5ff';
-    return `
-    <article class="agent-card raid-frame ${a.mode}">
-      <div class="agent-head">
-        <div class="agent-ident">
-          <span class="role-icon ${a.mode === 'active' ? 'tank' : a.role.toLowerCase().includes('healer') ? 'healer' : 'dps'}"></span>
-          <div>
-            <div class="agent-name" style="color:${classColor}">${a.name}</div>
-            <div class="agent-role">${a.role}</div>
+  const debuffIcons = { silence: '🔇', latency: '🐌', oom: '💧' };
+  const grouped = state.agents.reduce((acc, a) => {
+    const g = a.group || 1;
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(a);
+    return acc;
+  }, {});
+
+  el.roster.innerHTML = Object.keys(grouped).sort((a, b) => Number(a) - Number(b)).map(groupId => {
+    const rows = grouped[groupId].map(a => {
+      const hp = Math.max(0, Math.min(100, a.hp ?? 90));
+      const mp = Math.max(0, Math.min(100, a.mp ?? 70));
+      const threat = Math.max(0, Math.min(100, a.threat ?? 0));
+      const classColor = classColors[a.classKey] || '#d9e5ff';
+      const roleClass = a.role.toLowerCase().includes('tank') || a.role.toLowerCase().includes('lead') ? 'tank' : a.role.toLowerCase().includes('healer') ? 'healer' : 'dps';
+      const debuffs = (a.debuffs || []).map(d => `<span class="debuff" title="${d}">${debuffIcons[d] || '☠'} </span>`).join('');
+      const threatClass = threat > 85 ? 'high' : threat > 55 ? 'mid' : 'low';
+
+      return `
+      <article class="agent-card raid-frame ${a.mode} threat-${threatClass}">
+        <div class="agent-head">
+          <div class="agent-ident">
+            <span class="role-icon ${roleClass}"></span>
+            <div>
+              <div class="agent-name" style="color:${classColor}">${a.name}</div>
+              <div class="agent-role">${a.role}</div>
+            </div>
           </div>
+          <div class="agent-role"><span class="dot ${modeDot(a.mode)}"></span>${a.mode}</div>
         </div>
-        <div class="agent-role"><span class="dot ${modeDot(a.mode)}"></span>${a.mode}</div>
-      </div>
-      <div class="raid-bars">
-        <div class="bar hp"><span style="width:${hp}%"></span><em>HP ${hp}%</em></div>
-        <div class="bar mp"><span style="width:${mp}%"></span><em>MP ${mp}%</em></div>
-      </div>
-      <div class="raid-cast">Casting: ${a.cast || 'Ready'}</div>
-      <div class="agent-last">${a.last}</div>
-    </article>`;
+        <div class="raid-bars">
+          <div class="bar hp"><span style="width:${hp}%"></span><em>${hp}%</em></div>
+          <div class="bar mp"><span style="width:${mp}%"></span><em>${mp}%</em></div>
+          <div class="bar threat"><span style="width:${threat}%"></span><em>Threat ${threat}%</em></div>
+        </div>
+        <div class="raid-meta-row">
+          <div class="raid-cast">Casting: ${a.cast || 'Ready'}</div>
+          <div class="debuffs">${debuffs || '<span class="debuff empty">—</span>'}</div>
+        </div>
+        <div class="agent-last">${a.last}</div>
+      </article>`;
+    }).join('');
+
+    return `<section class="raid-group"><h3 class="raid-group-title">Group ${groupId}</h3>${rows}</section>`;
   }).join('');
 
   el.kanban.innerHTML = lanes.map(l => {

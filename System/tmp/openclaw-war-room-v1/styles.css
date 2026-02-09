@@ -74,13 +74,37 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
 .dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; margin-right: 6px; }
 .dot.active { background: var(--ok); } .dot.idle { background: var(--warn); } .dot.stale { background: var(--bad); }
 
-.roster-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-1); }
-.agent-card { border: 1px solid #243a58; background: #0d1728; border-radius: 10px; padding: 10px; min-height: 92px; }
+.roster-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.raid-group { border: 1px solid #3d3320; border-radius: 8px; padding: 8px; background: linear-gradient(180deg, #14120c, #0f131d); }
+.raid-group-title {
+  margin: 0 0 8px;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: #d9bb76;
+  text-transform: uppercase;
+  border-bottom: 1px solid #4b3f27;
+  padding-bottom: 4px;
+}
+.agent-card { border: 1px solid #243a58; background: #0d1728; border-radius: 10px; padding: 8px; min-height: 92px; margin-bottom: 8px; }
 .agent-head { display: flex; justify-content: space-between; align-items: center; }
 .agent-ident { display: flex; align-items: center; gap: 8px; }
 .agent-name { font-weight: 700; font-size: 0.96rem; color: #f3f7ff; text-shadow: 0 0 8px rgba(0,0,0,.4); }
 .agent-role { color: var(--muted); font-size: 0.78rem; }
-.agent-last { margin-top: 8px; color: #b6caed; font-size: .82rem; }
+.agent-last { margin-top: 6px; color: #8ea3c7; font-size: .76rem; }
+.raid-meta-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
+.debuffs { display: flex; gap: 4px; }
+.debuff {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid #8f3f3f;
+  background: #2a1212;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .64rem;
+}
+.debuff.empty { border-color: #3f4a5c; background: #1a2230; color: #7488a9; }
 
 .raid-frame {
   border: 1px solid #6b5b2d;
@@ -99,11 +123,11 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
 .role-icon.healer { background: #3ad17d; }
 .role-icon.dps { background: #e74d4d; }
 
-.raid-bars { margin-top: 8px; display: grid; gap: 6px; }
+.raid-bars { margin-top: 8px; display: grid; gap: 4px; }
 .bar {
   position: relative;
-  height: 16px;
-  border-radius: 3px;
+  height: 14px;
+  border-radius: 2px;
   background: #0a0e16;
   border: 1px solid #3f3b2a;
   overflow: hidden;
@@ -115,6 +139,7 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
 }
 .bar.hp span { background: linear-gradient(90deg, #1f8f45, #49d16f); }
 .bar.mp span { background: linear-gradient(90deg, #1f4b9f, #4a86ff); }
+.bar.threat span { background: linear-gradient(90deg, #7c2a1a, #f05f3b); }
 .bar em {
   position: absolute;
   inset: 0;
@@ -122,17 +147,20 @@ h1 { margin: 0; letter-spacing: 0.09em; font-size: 1.1rem; }
   align-items: center;
   justify-content: center;
   font-style: normal;
-  font-size: .68rem;
+  font-size: .62rem;
   color: #f0f5ff;
   text-shadow: 0 1px 2px #000;
 }
 .raid-cast {
-  margin-top: 7px;
-  font-size: .74rem;
+  font-size: .7rem;
   color: #ffdc93;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+
+.threat-high { box-shadow: inset 0 0 0 1px rgba(255, 95, 75, .45), 0 0 14px rgba(240, 95, 59, .25); }
+.threat-mid { box-shadow: inset 0 0 0 1px rgba(255, 180, 80, .25); }
+.threat-low { box-shadow: inset 0 0 0 1px rgba(100, 180, 120, .15); }
 
 .kanban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-1); }
 .lane { border: 1px solid #274469; border-radius: 10px; padding: 8px; background: #0d1a2d; min-height: 220px; }
