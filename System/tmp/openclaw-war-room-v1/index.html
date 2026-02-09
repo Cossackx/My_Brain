@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenClaw War Room v2</title>
+    <title>OpenClaw War Room v3</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -13,6 +13,14 @@
           <h1>OPENCLAW WAR ROOM</h1>
           <p id="subline">Kanban + Multi-Chat Visual Pass</p>
         </div>
+
+        <section class="mission-pulse" aria-label="Mission pulse">
+          <div class="pulse-item"><span>Agents Active</span><strong id="pulse-active">0</strong></div>
+          <div class="pulse-item"><span>Blockers</span><strong id="pulse-blocked">0</strong></div>
+          <div class="pulse-item"><span>Gateway</span><strong id="pulse-gateway">stable</strong></div>
+          <div class="pulse-item"><span>Next Milestone</span><strong id="pulse-eta">--</strong></div>
+        </section>
+
         <div class="status-cluster">
           <span id="conn-pill" class="pill offline">DEMO MODE</span>
           <span class="pill">Agents <strong id="agent-count">0</strong></span>
@@ -20,9 +28,16 @@
         </div>
       </header>
 
-      <main class="layout-v2">
+      <main class="layout-v3">
         <section class="panel roster">
-          <h2>Agent Presence</h2>
+          <div class="section-head">
+            <h2>Agent Presence</h2>
+            <div class="legend" aria-label="agent status legend">
+              <span><i class="dot active"></i>active</span>
+              <span><i class="dot idle"></i>idle</span>
+              <span><i class="dot stale"></i>stale</span>
+            </div>
+          </div>
           <div id="roster-grid" class="roster-grid"></div>
         </section>
 
@@ -31,14 +46,40 @@
           <div class="kanban-grid" id="kanban-grid"></div>
         </section>
 
-        <section class="panel chats">
-          <h2>Live Chats (multi-session)</h2>
-          <div id="chat-grid" class="chat-grid"></div>
+        <section class="panel feed">
+          <div class="section-head">
+            <h2>Live Event Feed</h2>
+            <div class="feed-filters" id="feed-filters"></div>
+          </div>
+          <div id="feed-list" class="feed-list"></div>
         </section>
 
-        <section class="panel feed">
-          <h2>Live Event Feed</h2>
-          <div id="feed-list" class="feed-list"></div>
+        <section class="panel codex" aria-label="Codex style chat and history">
+          <div class="codex-shell">
+            <aside class="codex-sidebar">
+              <div class="codex-tabs">
+                <button class="tab-btn">CHAT</button>
+                <button class="tab-btn active">CODEX</button>
+              </div>
+              <p class="codex-label">Tasks</p>
+              <div id="codex-task-list" class="codex-task-list"></div>
+            </aside>
+
+            <section class="codex-main">
+              <div class="codex-toolbar">
+                <span>History</span>
+                <span class="muted">Live</span>
+              </div>
+              <div id="codex-history" class="codex-history"></div>
+              <div class="codex-composer" role="group" aria-label="codex composer">
+                <input id="codex-input" type="text" placeholder="Ask Codex anything... @ to add files, / for commands" />
+                <div class="composer-meta">
+                  <span>GPT-5.3-Codex</span>
+                  <span>High</span>
+                </div>
+              </div>
+            </section>
+          </div>
         </section>
       </main>
     </div>
