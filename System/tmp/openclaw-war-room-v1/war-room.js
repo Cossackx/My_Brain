@@ -12,16 +12,44 @@ const state = {
     { title: 'Ship visual v2', owner: 'Main', state: 'done' },
   ],
   codexTasks: [
-    { title: 'Evaluate Voxyz info quality', preview: 'Need confidence scoring + source audit.', age: '32m', unread: 0 },
-    { title: 'Tweet ideas for OpenClaw', preview: 'Rank hooks by CTR potential and novelty.', age: '1h', unread: 2 },
-    { title: 'App Store Connect CLI uses', preview: 'Clarify auth flow and practical commands.', age: '1h', unread: 0 },
-    { title: 'Gateway relay wiring', preview: 'Map event stream -> chat history adapter.', age: '2h', unread: 1 },
-  ],
-  codexHistory: [
-    { who: 'Main', line: 'Started war-room iteration and visual pass.' },
-    { who: 'Research', line: 'Summarized 3 source signals for planning.' },
-    { who: 'Ops', line: 'Gateway status check completed, no regressions.' },
-    { who: 'System', line: 'Next objective: real Gateway relay wiring.' },
+    {
+      title: 'Evaluate Voxyz info quality',
+      preview: 'Need confidence scoring + source audit.',
+      age: '32m',
+      unread: 0,
+      messages: [
+        { who: 'Main', line: 'Started war-room iteration and visual pass.' },
+        { who: 'Research', line: 'Summarized 3 source signals for planning.' },
+      ],
+    },
+    {
+      title: 'Tweet ideas for OpenClaw',
+      preview: 'Rank hooks by CTR potential and novelty.',
+      age: '1h',
+      unread: 2,
+      messages: [
+        { who: 'Ops', line: 'Gateway status check completed, no regressions.' },
+        { who: 'System', line: 'Next objective: real Gateway relay wiring.' },
+      ],
+    },
+    {
+      title: 'App Store Connect CLI uses',
+      preview: 'Clarify auth flow and practical commands.',
+      age: '1h',
+      unread: 0,
+      messages: [
+        { who: 'Main', line: 'Map command groups and likely developer workflow.' },
+      ],
+    },
+    {
+      title: 'Gateway relay wiring',
+      preview: 'Map event stream -> chat history adapter.',
+      age: '2h',
+      unread: 1,
+      messages: [
+        { who: 'System', line: 'Kanban + multi-chat pass active. Next: real Gateway relay wiring.' },
+      ],
+    },
   ],
   events: [],
   feedFilter: 'All',
@@ -104,14 +132,13 @@ function render() {
   el.codexTasks.querySelectorAll('.task-row').forEach(row => {
     row.addEventListener('click', () => {
       state.selectedTask = Number(row.getAttribute('data-task-index') || 0);
-      const task = state.codexTasks[state.selectedTask];
-      state.codexHistory.push({ who: 'Main', line: `Opened task: ${task.title}` });
-      if (state.codexHistory.length > 60) state.codexHistory.shift();
+      state.codexTasks[state.selectedTask].unread = 0;
       render();
     });
   });
 
-  el.codexHistory.innerHTML = state.codexHistory.slice(-24).map(item => `
+  const selected = state.codexTasks[state.selectedTask];
+  el.codexHistory.innerHTML = selected.messages.slice(-40).map(item => `
     <article class="hist-item ${item.who === 'Main' ? 'user' : ''}">
       <div class="who">${item.who}</div>
       <div class="line">${item.line}</div>
@@ -133,8 +160,14 @@ function pushEvent(agent, stream, text) {
   state.events.unshift({ time: now(), agent, stream, text });
   if (state.events.length > 240) state.events.length = 240;
 
-  state.codexHistory.push({ who: agent, line: text });
-  if (state.codexHistory.length > 60) state.codexHistory.shift();
+  const targetIdx = state.codexTasks.findIndex(t => t.title.toLowerCase().includes('gateway'));
+  const idx = targetIdx >= 0 ? targetIdx : state.selectedTask;
+  const thread = state.codexTasks[idx];
+  thread.messages.push({ who: agent, line: text });
+  if (thread.messages.length > 80) thread.messages.shift();
+
+  if (idx !== state.selectedTask) thread.unread = Math.min((thread.unread || 0) + 1, 99);
+  thread.preview = text;
 
   render();
 }
