@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenClaw War Room v1</title>
+    <title>OpenClaw War Room v2</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <h1>OPENCLAW WAR ROOM</h1>
-          <p id="subline">Live operator wallboard (v1 visual pass)</p>
+          <p id="subline">Kanban + Multi-Chat Visual Pass</p>
         </div>
         <div class="status-cluster">
           <span id="conn-pill" class="pill offline">DEMO MODE</span>
@@ -20,27 +20,25 @@
         </div>
       </header>
 
-      <main class="layout">
+      <main class="layout-v2">
         <section class="panel roster">
           <h2>Agent Presence</h2>
           <div id="roster-grid" class="roster-grid"></div>
         </section>
 
+        <section class="panel kanban">
+          <h2>Mission Kanban</h2>
+          <div class="kanban-grid" id="kanban-grid"></div>
+        </section>
+
+        <section class="panel chats">
+          <h2>Live Chats (multi-session)</h2>
+          <div id="chat-grid" class="chat-grid"></div>
+        </section>
+
         <section class="panel feed">
           <h2>Live Event Feed</h2>
           <div id="feed-list" class="feed-list"></div>
-        </section>
-
-        <section class="panel right-rail">
-          <h2>Mission Pulse</h2>
-          <div id="mission-list" class="mission-list"></div>
-
-          <h3>Design Notes</h3>
-          <ul>
-            <li>This is an original visual language (not VoxYZ assets).</li>
-            <li>Built for read-only wallboard mode.</li>
-            <li>Phase 2: wire to Gateway relay for true live stream.</li>
-          </ul>
         </section>
       </main>
     </div>
