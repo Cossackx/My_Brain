@@ -12,10 +12,10 @@ const state = {
     { title: 'Ship visual v2', owner: 'Main', state: 'done' },
   ],
   codexTasks: [
-    { title: 'Evaluate Voxyz info quality', age: '32m', scorePos: '', scoreNeg: '' },
-    { title: 'Tweet ideas for OpenClaw', age: '1h', scorePos: '+983', scoreNeg: '-5' },
-    { title: 'App Store Connect CLI uses', age: '1h', scorePos: '', scoreNeg: '' },
-    { title: 'Gateway relay wiring', age: '2h', scorePos: '', scoreNeg: '' },
+    { title: 'Evaluate Voxyz info quality', preview: 'Need confidence scoring + source audit.', age: '32m', unread: 0 },
+    { title: 'Tweet ideas for OpenClaw', preview: 'Rank hooks by CTR potential and novelty.', age: '1h', unread: 2 },
+    { title: 'App Store Connect CLI uses', preview: 'Clarify auth flow and practical commands.', age: '1h', unread: 0 },
+    { title: 'Gateway relay wiring', preview: 'Map event stream -> chat history adapter.', age: '2h', unread: 1 },
   ],
   codexHistory: [
     { who: 'Main', line: 'Started war-room iteration and visual pass.' },
@@ -89,13 +89,14 @@ function render() {
 
   el.codexTasks.innerHTML = state.codexTasks.map((t, i) => `
     <article class="task-row ${state.selectedTask === i ? 'active' : ''}" data-task-index="${i}">
-      <div class="task-title">${t.title}</div>
+      <div class="task-row-top">
+        <div class="task-title">${t.title}</div>
+        <span class="task-age">${t.age}</span>
+      </div>
+      <div class="task-preview">${t.preview}</div>
       <div class="task-meta">
-        <span>
-          ${t.scorePos ? `<b class="task-score pos">${t.scorePos}</b>` : ''}
-          ${t.scoreNeg ? `<b class="task-score neg"> ${t.scoreNeg}</b>` : ''}
-        </span>
-        <span>${t.age}</span>
+        <span class="muted">thread</span>
+        ${t.unread ? `<span class="unread-badge">${t.unread}</span>` : '<span></span>'}
       </div>
     </article>
   `).join('');
