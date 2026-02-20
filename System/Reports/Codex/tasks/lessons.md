@@ -9,3 +9,7 @@
 - When OpenClaw reports missing Anthropic API key unexpectedly, run `openclaw models list` first: if the configured primary model is tagged `missing`, switch primary to an auth-ready model and restart gateway before touching auth stores.
 - If OpenClaw CLI appears stalled from WSL, verify daemon/gateway state and retry health commands via PowerShell; this can distinguish shell transport issues from runtime failures.
 - For cron/system maintenance prompts, do not load a skill unless the task explicitly requires specialized skill behavior; unnecessary skill-file reads can leak large internal text into user-visible chat.
+- On Windows/pwsh hosts, never use bash-only syntax (`&&`, `python - <<'PY'`, `if [ -f ... ]`, `head -n`); use PowerShell-safe separators/constructs or invoke `bash -lc` explicitly.
+- Before `git checkout master` in nightly automation, run a quick dirty-worktree preflight; stash only the minimum tracked files that block checkout (avoid broad `stash -u` on large vaults).
+- Treat any “implemented” claim as `UNVERIFIED` until checkpoint artifact path + optest output are attached in the same execution slice.
+- When searching paths containing spaces (for example `RAZSOC Duty Board.md`), quote paths or use `rg --glob` to avoid false missing-file errors on Windows.

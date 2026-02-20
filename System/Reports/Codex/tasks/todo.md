@@ -437,3 +437,10 @@
 ## Review (2026-02-09) - Proactive Intake Default
 - [x] Agent now defaults to capture -> synthesize -> organize -> distill -> act -> ask for all user-shared content artifacts.
 - [x] Blocking questions are constrained to max 2; otherwise proceed autonomously with reversible actions.
+
+## Review (2026-02-20) - Nightly Compound Learning Sync (22:30)
+- [x] Reviewed last-24h chat/session artifacts for regression signals (focus: shell portability failures, verification drift, checkout blockers).
+- [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (PowerShell-safe command discipline, narrow stash preflight, artifact-first verification, quoted path search).
+- [x] No AGENTS.md change made (existing governance already covers the durable behavior; lessons update was sufficient).
+- [x] Local blocker handled: `git checkout master` initially failed due dirty `todo.md`; resolved via narrow tracked-file stash, then checkout succeeded.
+- [ ] Blocker (2026-02-20 nightly sync): push failed on `master` because no remote push destination is configured (`git push` -> "No configured push destination"). Safe stop after local commit `aec5e3f`; next step: set remote (`git remote add origin <url>`) and run `git push -u origin master`.
