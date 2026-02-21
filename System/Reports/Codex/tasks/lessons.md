@@ -1,5 +1,6 @@
 # Lessons
 
+- For any `delivery.mode=announce` cron job, enforce the transport identity-header contract in the prompt (`CCDR → reports to Raz (SECWAR) → session: agent:main:cron:<job_id>`) with exact exemptions only for `NO_REPLY`/`HEARTBEAT_OK`; otherwise response-lint drift will recur.
 - VS Code background tasks: problemMatcher must be schema-valid (regexp + file/line/column groups). Otherwise VS Code errors with "description can't be converted into a problem matcher". Use a proper pattern or remove the matcher.
 - When a user corrects a path or naming detail (e.g., `TaskNotes/_Archive`), immediately update configs and any plan/spec text to match the corrected path.
 - For Obsidian callouts, use the official foldable syntax (`> [!type]-`) and verify against docs before reformatting chat outputs.
@@ -13,3 +14,5 @@
 - Before `git checkout master` in nightly automation, run a quick dirty-worktree preflight; stash only the minimum tracked files that block checkout (avoid broad `stash -u` on large vaults).
 - Treat any “implemented” claim as `UNVERIFIED` until checkpoint artifact path + optest output are attached in the same execution slice.
 - When searching paths containing spaces (for example `RAZSOC Duty Board.md`), quote paths or use `rg --glob` to avoid false missing-file errors on Windows.
+- For diagnostic-only cron prompts with explicit command allowlists, execute only the listed checks; do not add extra file reads/skill loads/sweeps that expand scope or leak internals.
+- On pwsh hosts, if Python multiline logic is needed, use `python -c` or write a temp `.py` file; never use bash heredoc forms (`python - <<'PY'`).
