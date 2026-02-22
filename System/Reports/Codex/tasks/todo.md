@@ -1,5 +1,19 @@
 # Task Plan
 
+## Governance Closeout Sprint (2026-02-21 21:30 ET)
+- [x] Publish same-day brief artifact (`Ops/RAZSOC/Briefs/2026-02-21 Governance Closeout Brief.md`).
+- [x] Publish supervisor-validation packet for CMD-20260221-01..07 (`Ops/RAZSOC/Logs/2026-02-21-supervisor-validation-cmd-01-07.md`).
+- [x] Patch command-deck closeout state for CMD-20260221-01..07 and align evidence refs (`Ops/RAZSOC/Logs/2026-02-21-ccdr-insight-command.md`).
+- [x] Execute cron-template remediation optest and append proof into runlog (`Ops/RAZSOC/Logs/2026-02-21-runlog.md`).
+- [x] Refresh Duty Board truth-state + latest delta (`Ops/RAZSOC/Board/RAZSOC Duty Board.md`).
+- [x] Re-validate runtime + governance lints (`openclaw status --deep`, `openclaw cron status --json`, `reportingRequirementsLint.js`, `workflowLint.js`).
+
+## Review (2026-02-21) - Governance Closeout Sprint
+- [x] Runtime/channel posture verified healthy (`0 critical / 0 warn`; Telegram channel OK).
+- [x] Runlog unresolved header now reflects closure of the previously recurring CUB blockers.
+- [x] Same-day brief + supervisor-validation evidence paths are now canonical and cross-linkable.
+- [x] Remaining watch item intentionally preserved: diagnostics quarantine for 2026-02-19 remains fail-closed until dedicated re-verification packet.
+
 ## HyperAgent Assimilation + Obsidian Integration (2026-02-21)
 - [x] Assimilate upstream source into managed path (`System/_codex_downloads/hyperagent`).
 - [x] Add canonical runtime controller (`System/automation/openclaw/hyperAgentManage.sh`) and Obsidian capture adapter (`System/automation/openclaw/hyperAgentObsidianIngest.js` + fixture).
@@ -813,3 +827,14 @@ eferences/, scripts/scratchpad.js).
 - [x] Reviewed last-24h chat/session outputs (2026-02-20/21) for missed regressions.
 - [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (diagnostic-command allowlist discipline; pwsh-safe Python multiline execution).
 - [x] No AGENTS.md change made (lessons-level reinforcement sufficient; no durable governance delta required).
+
+## Review (2026-02-21) - Nightly Auto-Ship (23:00) Build Phase
+- [x] Ran local-only sync path (`git checkout master`) with no pull.
+- [x] Evaluated backlog for highest-priority unchecked implementation item.
+- [x] `rg "^- \[ \]" System/Reports/Codex/tasks/todo.md` returned no unchecked items.
+- [x] **No-op recorded**: no actionable unchecked implementation tasks existed, so branch/commit/push/PR steps were skipped by instruction.
+
+## Review (2026-02-22) - Nightly Compound Learning Sync (22:30)
+- [x] Reviewed last-24h chats/sessions (2026-02-21 window) for regressions and repeated failure patterns.
+- [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (CLI preflight on Windows, missing-tool blocker handling, de-duplication of multi-shard transcript evidence).
+- [x] No AGENTS.md update required (no durable governance instruction delta; lessons update sufficient).

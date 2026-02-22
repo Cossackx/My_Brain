@@ -16,3 +16,5 @@
 - When searching paths containing spaces (for example `RAZSOC Duty Board.md`), quote paths or use `rg --glob` to avoid false missing-file errors on Windows.
 - For diagnostic-only cron prompts with explicit command allowlists, execute only the listed checks; do not add extra file reads/skill loads/sweeps that expand scope or leak internals.
 - On pwsh hosts, if Python multiline logic is needed, use `python -c` or write a temp `.py` file; never use bash heredoc forms (`python - <<'PY'`).
+- Before reporting a CLI lane as healthy on Windows, run a command-availability preflight (`Get-Command <tool>`) for each required binary (for example `gh`, `gog`, `summarize`, `nano-pdf`) and classify missing tools as explicit blockers instead of retrying failing calls.
+- When multiple transcript shards of the same session exist (for example `_4`, `_5`, `_6` variants), treat them as one evidence stream during reviews to avoid duplicate-learning inflation and repeated blocker counts.
