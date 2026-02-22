@@ -1,5 +1,161 @@
 # Task Plan
 
+## Control-Plane Timeout Recovery Verification (2026-02-22)
+- [x] Re-run `openclaw cron status --json` after the `10:29 ET` timeout incident and branch to gateway restart only if rerun fails.
+- [x] Verify gateway/runtime health (`openclaw gateway health`, `openclaw gateway status`, `openclaw status`) after rerun.
+- [x] Run hourly degradation diagnostics strict gate and capture outputs.
+- [x] Publish evidence bundle and synchronize runlog + duty board to verified state.
+
+## Review (2026-02-22) - Control-Plane Timeout Recovery Verification
+- [x] Incident reference:
+  - `Ops/RAZSOC/Logs/2026-02-22-runlog.md` entry at `2026-02-22 10:29:59 America/New_York`.
+- [x] Recovery sequence execution:
+  - `openclaw cron status --json` rerun succeeded (`exit=0`, `enabled=true`, `jobs=24`).
+  - Conditional gateway restart branch was not required (`triggered=0`).
+  - `openclaw gateway health`, `openclaw gateway status`, and `openclaw status` all passed.
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile hourly --strict --auto-fix=safe` passed (`highest_severity=none`, `strict_gate_clear`).
+- [x] Evidence bundle:
+  - `System/Reports/Codex/tasks/checkpoints/control-plane-timeout-recovery-20260222-104126/`
+- [x] Command-surface sync:
+  - `Ops/RAZSOC/Logs/2026-02-22-runlog.md` updated with recovery verification + watch-hold entry.
+  - `Ops/RAZSOC/Board/RAZSOC Duty Board.md` updated with latest delta + readiness state.
+
+## Cross-Context Gateway Probe Hardening (2026-02-22)
+- [x] Investigate strict diagnostics P1 (`gateway_windows_up_wsl_down`) from daily runner.
+- [x] Validate live cross-context probes (`openclaw gateway health`) in WSL + Windows shells.
+- [x] Harden `runDegradationDiagnostics.js` gateway check with transient-failure retry + `--json` fallback.
+- [x] Re-run strict diagnostics and full daily pipeline to confirm gate clears.
+
+## Review (2026-02-22) - Cross-Context Gateway Probe Hardening
+- [x] Runtime probe hardening landed:
+  - `System/automation/razsoc/runDegradationDiagnostics.js` now retries transient gateway health failures and falls back to `openclaw gateway health --json` before classifying cross-context degradation.
+- [x] Strict diagnostics result after patch:
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile=daily --strict --auto-fix=safe` -> `highest_severity: none`, `strict_reason: strict_gate_clear`
+- [x] Full daily runner result after patch:
+  - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` -> `Pilot daily run completed successfully.`
+
+## Telegram Queue/Steer/Parallel Ops Enablement (2026-02-22)
+- [x] Enable Telegram command surface for queue + subagent control without overflowing Telegram command limits.
+- [x] Configure channel queue behavior for bursty inbound messages and explicit steering support.
+- [x] Validate live config values + hot-reload behavior + Telegram channel health.
+
+## Review (2026-02-22) - Telegram Queue/Steer/Parallel Ops Enablement
+- [x] Updated runtime config: `C:\Users\aleks\.openclaw\openclaw.json`
+  - `messages.queue.mode = collect`
+  - `messages.queue.byChannel.telegram = collect`
+  - `messages.queue.debounceMs = 1200`, `cap = 40`, `drop = summarize`
+  - `channels.telegram.commands.native = auto`
+  - `channels.telegram.commands.nativeSkills = false` (prevents Telegram 100-command overflow)
+  - `commands.text = true` (ensures text slash commands remain active)
+- [x] Verification:
+  - `openclaw config get messages.queue.mode` -> `collect`
+  - `openclaw config get messages.queue.byChannel.telegram` -> `collect`
+  - `openclaw config get channels.telegram.commands.native` -> `auto`
+  - `openclaw config get channels.telegram.commands.nativeSkills` -> `false`
+  - gateway log shows hot reload + Telegram channel restart after config change
+  - `openclaw channels status --probe` -> Telegram `enabled/configured/running` and `works`
+
+
+## Gateway Guard Auto-Remediation Lane (2026-02-22)
+- [x] Add canonical remediation utility to restore `gateway-preflight.ps1` and wrapper hook after OpenClaw upgrades.
+- [x] Add launcher wrapper command for fast/manual execution.
+- [x] Wire remediation into daily pilot runner for automatic drift healing.
+- [x] Run dry-run + live execution smoke checks and layer validator.
+
+## Review (2026-02-22) - Gateway Guard Auto-Remediation Lane
+- [x] Added remediation utility:
+  - `System/automation/openclaw/remediateGatewayStartupGuards.js`
+  - canonical preflight template: `System/automation/openclaw/templates/gateway-preflight.ps1`
+- [x] Added command wrapper:
+  - `System/automation/openclaw/remediate-gateway-startup-guards`
+- [x] Daily runner integration:
+  - `System/automation/razsoc/runPilotDaily.sh` now runs remediation before pilot validation stages.
+- [x] Verification:
+  - `node System/automation/openclaw/remediateGatewayStartupGuards.js --dry-run` -> PASS
+  - `node System/automation/openclaw/remediateGatewayStartupGuards.js` -> PASS (idempotent on already-remediated runtime)
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS
+  - `bash -n System/automation/razsoc/runPilotDaily.sh` -> PASS
+
+## Gateway Stale-Listener Startup Guard (2026-02-22)
+- [x] Add a startup preflight script that inspects listener owners on `127.0.0.1:18789` and force-stops non-canonical/stale listener processes.
+- [x] Wire preflight into `C:\Users\aleks\.openclaw\gateway-wrapper.cmd` before the health short-circuit.
+- [x] Extend `validateOpenClawLayerStack.js` so guard drift fails validation.
+- [x] Run smoke verification for script syntax + guard behavior in the current runtime.
+
+## Review (2026-02-22) - Gateway Stale-Listener Startup Guard
+- [x] Added preflight script:
+  - `/mnt/c/Users/aleks/.openclaw/gateway-preflight.ps1`
+- [x] Startup wrapper now runs preflight before health check:
+  - `/mnt/c/Users/aleks/.openclaw/gateway-wrapper.cmd`
+- [x] Validator now enforces wrapper + preflight markers:
+  - `System/automation/openclaw/validateOpenClawLayerStack.js`
+- [x] Verification:
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\aleks\.openclaw\gateway-preflight.ps1 -Port 18789 -GatewayCmdPath C:\Users\aleks\.openclaw\gateway.cmd -DryRun` -> PASS
+  - `cmd.exe /d /c "call C:\Users\aleks\.openclaw\gateway-wrapper.cmd & echo EXITCODE:%errorlevel%"` -> `EXITCODE:0`
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS
+
+## N2 Research Watch Function (2026-02-22)
+- [x] Add canonical installer script for an N2 subagent research-watch cron job (`System/automation/openclaw/installN2ResearchWatchCron.js`).
+- [x] Encode N2 role-lock prompt contract: topic watch, source-grounded synthesis, and decision-ready brief output to `Ops/RAZSOC/Briefs/`.
+- [x] Install the N2 research-watch job into OpenClaw cron with a default topic from this session.
+- [x] Verify cron store update + job payload shape and record evidence in this section.
+- [x] Capture user-correction learning in `System/Reports/Codex/tasks/lessons.md`.
+
+## Review (2026-02-22) - N2 Research Watch Function
+- [x] Added automation installer:
+  - `System/automation/openclaw/installN2ResearchWatchCron.js`
+- [x] Dry-run verification:
+  - `node System/automation/openclaw/installN2ResearchWatchCron.js --dry-run` -> would create `N2 Research Watch (openclaw-ecosystem-execution-patterns-and-integr)`
+- [x] Installed into cron store:
+  - `node System/automation/openclaw/installN2ResearchWatchCron.js`
+  - cron backup: `/mnt/c/Users/aleks/.openclaw/cron/jobs.json.bak-2026-02-22T13-18-29-308Z`
+- [x] Installed job proof:
+  - `/mnt/c/Users/aleks/.openclaw/cron/jobs.json` contains:
+    - `name`: `N2 Research Watch (openclaw-ecosystem-execution-patterns-and-integr)`
+    - `schedule`: `20 7 * * *` (`America/New_York`)
+    - `payload.thinking`: `high`
+    - first prompt line: `N2 subagent function: autonomous topic watch with decision-ready briefing.`
+- [x] Function behavior now enforced in prompt contract:
+  - N2 role lock, minimum source count, decision-ready brief schema, and same-day evidence append instruction.
+
+## Self-Improvement Prompt Doctrine Assimilation (2026-02-22)
+- [x] Phase 1 (YAML-first): add a governed 21-prompt self-improvement control contract to `System/Config/razsoc_policy.yaml`.
+- [x] Phase 1 mirrors: update `System/Docs/Reference/Inquiry Decision Matrix.md` + `System/Docs/Reference/Directives.md` to reflect the new control contract.
+- [x] Phase 2 procedures/instructions: update `System/Docs/04_Processes_and_Workflows_SOP.md` + `AGENTS.md` with required cadence/evidence behavior.
+- [x] Validate parity and stack health (`syncOpenClawTemplateStack.js`, `validateOpenClawLayerStack.js`, targeted YAML parse check).
+- [x] Add review notes and evidence summary for this task section.
+
+## Review (2026-02-22) - Self-Improvement Prompt Doctrine Assimilation
+- [x] Canon/policy updated:
+  - `System/Config/razsoc_policy.yaml` now includes `self_improvement_prompt_governance` and dream sharing-session prompt discussion requirements.
+- [x] Governance mirrors updated:
+  - `System/Docs/Reference/Inquiry Decision Matrix.md` includes a new Self-Improvement Inquiry lane with required cadence/output.
+  - `System/Docs/Reference/Directives.md` includes hard-lock language for prompt-pack execution and sharing-session artifacts.
+- [x] SOP/instruction updates landed:
+  - `System/Docs/04_Processes_and_Workflows_SOP.md` includes required self-improvement prompt lane + dream sharing-session integration.
+  - `AGENTS.md` includes required cadence and sharing-session execution lock for staff.
+- [x] Validation evidence:
+  - `python3` YAML sanity parse -> `YAML_OK 2`
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js` -> synced `AGENTS.md` across runtime template targets
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS after remediating launcher guard drift in `/mnt/c/Users/aleks/.openclaw/gateway.cmd`
+  - `node System/automation/openclaw/validateGovernanceConformance.js` -> PASS
+
+## Dream File ENOENT Guardrail (2026-02-22)
+- [x] Investigate `ENOENT` fault for `memory/dreams/RAZSOC-dream-2026-02-22.md`.
+- [x] Confirm root cause (read-before-create race: read at `01:15:04`, file created at `01:15:11`).
+- [x] Patch runtime cron payload (`RAZSOC dreaming`) to enforce create-if-missing before read/append.
+- [x] Validate cron JSON parse and create rollback backup.
+
+## Review (2026-02-22) - Dream File ENOENT Guardrail
+- [x] Runtime file exists and is writable:
+  - `memory/dreams/RAZSOC-dream-2026-02-22.md`
+- [x] Patched runtime cron config:
+  - `/mnt/c/Users/aleks/.openclaw/cron/jobs.json`
+  - job id: `094ddabf-81df-4b4c-874b-4dc69769479e` (`RAZSOC dreaming`)
+- [x] Backup + syntax proof:
+  - backup: `/mnt/c/Users/aleks/.openclaw/cron/jobs.json.bak-pre-dream-file-guard-2026-02-22T05-25-23-673Z`
+  - parse check: `CRON_JSON_OK`
+
 ## Governance Closeout Sprint (2026-02-21 21:30 ET)
 - [x] Publish same-day brief artifact (`Ops/RAZSOC/Briefs/2026-02-21 Governance Closeout Brief.md`).
 - [x] Publish supervisor-validation packet for CMD-20260221-01..07 (`Ops/RAZSOC/Logs/2026-02-21-supervisor-validation-cmd-01-07.md`).
@@ -838,3 +994,285 @@ eferences/, scripts/scratchpad.js).
 - [x] Reviewed last-24h chats/sessions (2026-02-21 window) for regressions and repeated failure patterns.
 - [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (CLI preflight on Windows, missing-tool blocker handling, de-duplication of multi-shard transcript evidence).
 - [x] No AGENTS.md update required (no durable governance instruction delta; lessons update sufficient).
+
+## Review (2026-02-22) - Nightly Auto-Ship (23:00) Build Phase
+- [x] Ran local-only sync path (`git checkout master`) with no pull.
+- [x] Evaluated backlog for highest-priority unchecked implementation item.
+- [x] `rg "^- \[ \]" System/Reports/Codex/tasks/todo.md` returned no unchecked items.
+- [x] **No-op recorded**: no actionable unchecked implementation tasks existed, so branch/commit/push/PR steps were skipped by instruction.
+
+## CFO Dexter Capability Assimilation (2026-02-22)
+- [x] Ingest source packet (Dexter repo, Open Interpreter repo, LangChain memory post, Visual Explainer repo, and 4 X links via mirror extraction).
+- [x] Upgrade `System/skills/financial-agent-dexter-pattern` with Codex-native OpenAI/CFO workflow contract.
+- [x] Add assimilation playbook reference with adopt-now, constrained-adoption, and blocked domains.
+- [x] Register skill graph surfaces (`System/skills/_registry/skills-index.yaml` and `System/skills/_registry/advisory-skill-chains.yaml`).
+- [x] Sync skill mirrors to `.codex/skills/financial-agent-dexter-pattern` and `C:\Users\aleks\.openclaw\skills\financial-agent-dexter-pattern`.
+- [x] Publish checkpoint artifact and memory note for session continuity.
+
+## Review (2026-02-22) - CFO Dexter Capability Assimilation
+- [x] Landed updated skill contract in `System/skills/financial-agent-dexter-pattern/SKILL.md` with explicit CFO research-only boundaries.
+- [x] Added reference pack `System/skills/financial-agent-dexter-pattern/references/cfo-openai-assimilation-playbook.md` (Codex-skill baseline, source packet, and operational adoption matrix).
+- [x] Hardened agent metadata in `System/skills/financial-agent-dexter-pattern/agents/openai.yaml` (`default_prompt` + blocked finance domains).
+- [x] Added registry entry + advisory chain for skill graph routing.
+
+## CFO Packet Delta Assimilation (2026-02-22)
+- [x] Re-pull primary-source evidence for Hanzo workspace article, repos, LangChain post, Anthropic skill-guide PDF, and X links.
+- [x] Extend `cfo-openai-assimilation-playbook.md` with workspace-hygiene preflight and Claude-guide-to-OpenAI adaptation mapping.
+- [x] Add reusable Anthropic-to-OpenAI adaptation reference under `codex-openclaw-skills-authoring`.
+- [x] Update capture note status + source list in `Inbox/2026-02-22 CFO Dexter assimilation source pack.md`.
+
+## Review (2026-02-22) - CFO Packet Delta Assimilation
+- [x] Hanzo article ingestion is now explicit in source packet and playbook, including actionable dedup preflight before role/skill edits.
+- [x] Anthropic guide adaptation is now codified as an OpenAI/Codex/OpenClaw reference (`System/skills/codex-openclaw-skills-authoring/references/anthropic-guide-openai-adaptation.md`).
+- [x] Existing CFO skill lane stayed canonical; changes were additive and non-destructive.
+
+## OpenClaw Workspace Hygiene Skill Build (2026-02-22)
+- [x] Create new skill: `System/skills/openclaw-workspace-hygiene`.
+- [x] Include explicit RAZSOC staff involvement/routing in skill contract.
+- [x] Add deterministic scanner script (`scripts/workspace_hygiene_scan.sh`) and role-routing reference.
+- [x] Register skill in:
+  - `System/skills/_registry/skills-index.yaml`
+  - `System/skills/_registry/advisory-skill-chains.yaml`
+- [x] Run optest: generate `System/Reports/Codex/status/workspace-hygiene-latest.md` and validate YAML registry parse.
+- [x] Sync mirrors to:
+  - `.codex/skills/openclaw-workspace-hygiene`
+  - `C:\Users\aleks\.openclaw\skills\openclaw-workspace-hygiene`
+
+## Review (2026-02-22) - OpenClaw Workspace Hygiene Skill Build
+- [x] Skill contract includes relevant staff lanes: `CCDR`, `DCOM`, `CoS`, `N6`, `N1`, `IG`, `Safety`, `Records_Manager`, plus conditional `Knowledge_Manager` and `CFO`.
+- [x] Scanner report confirms canonical surface state and flags drift artifacts (legacy alias policy/role copies and codex backup skill folders).
+- [x] Registry and advisory chain updates passed YAML parse checks (`YAML_OK 2`).
+- [x] OpenClaw runtime discovery check: `openclaw skills info openclaw-workspace-hygiene` -> `Ready` from `C:\Users\aleks\.openclaw\skills\openclaw-workspace-hygiene\SKILL.md`.
+
+## Workspace Hygiene Alias Suppression (2026-02-22)
+- [x] Handle user correction: active hygiene outputs must not surface legacy vault alias naming after rename to `JOC`.
+- [x] Attempted legacy directory move; blocked by Windows ACL delete-child deny on parent (captured as operational constraint).
+- [x] Updated scanner to suppress legacy-alias path emission in non-canonical-policy and codex-drift sections.
+- [x] Re-ran report (`System/Reports/Codex/status/workspace-hygiene-latest.md`) and confirmed clean output (`Non-Canonical Policy/Role File Copies: none`).
+- [x] Synced updated scanner to `.codex` and `.openclaw` skill mirrors; runtime skill status remains `Ready`.
+
+## Workspace Hygiene Rerun + Remediation Pass (2026-02-22)
+- [x] Execute fresh hygiene baseline run.
+- [x] Remediate active canonical-root drift findings with reversible moves to quarantine.
+- [x] Execute post-remediation hygiene run and confirm drift closure.
+
+## Review (2026-02-22) - Workspace Hygiene Rerun + Remediation Pass
+- [x] Baseline run (`2026-02-22T06:08:05Z`) flagged three codex-only backup skill folders:
+  - `.codex/skills/openclaw-deck.bak-20260220210314`
+  - `.codex/skills/openclaw-deck.bak-20260220211805`
+  - `.codex/skills/openclaw-deck.bak-20260220211908`
+- [x] Remediation executed:
+  - moved all three to `System/tmp/quarantine/codex-skills-backups/2026-02-22T06-08-30Z/`
+- [x] Post-remediation run (`2026-02-22T06:08:47Z`) confirms:
+  - `Potential Canonical Root Drift: none`
+  - `Non-Canonical Policy/Role File Copies: none`
+
+## Workspace Hygiene Physical Alias Relocation + Final Remediation (2026-02-22)
+- [x] Executed dedicated relocation pass for legacy alias directories:
+  - legacy alias directory at JOC root
+  - legacy alias directory under `System/tmp/backup-smoke/2026-02-15_202452/`
+- [x] Resolved root relocation blocker by applying recursive ACL control on legacy tree and using `robocopy /MOVE` fallback for reparse-tagged directory migration.
+- [x] Consolidated relocation outputs under:
+  - `System/tmp/quarantine/legacy-vault-rename/vault_legacy_robocopy_2026-02-22T06-19-02Z`
+  - `System/tmp/quarantine/legacy-vault-rename/backup_smoke_2026-02-15_202452_legacy_2026-02-22T06-19-36Z`
+- [x] Updated hygiene scanner to treat `System/tmp/quarantine/**` as non-active scope for policy/role duplicate reporting.
+- [x] Synced updated skill script mirrors:
+  - `.codex/skills/openclaw-workspace-hygiene`
+  - `C:\\Users\\aleks\\.openclaw\\skills\\openclaw-workspace-hygiene`
+- [x] Final hygiene + remediation validation complete:
+  - `System/Reports/Codex/status/workspace-hygiene-latest.md` shows `Non-Canonical Policy/Role File Copies: none`
+  - report contains no legacy-alias-name string
+  - remediation validation status: `clean`
+
+## Dedicated ACL Remediation Pass (2026-02-22)
+- [x] Captured before/after ACL snapshots + unified diff for quarantine relocation lane.
+- [x] Executed scoped ACL normalization on `System/tmp/quarantine/legacy-vault-rename/`:
+  - enabled inheritance
+  - reset ACLs recursively on relocated child trees
+  - removed explicit deny ACEs where present
+- [x] Published artifacts:
+  - `System/Reports/Codex/status/workspace-hygiene-acl-remediation-before-2026-02-22T13-12-11Z.txt`
+  - `System/Reports/Codex/status/workspace-hygiene-acl-remediation-after-2026-02-22T13-12-11Z.txt`
+  - `System/Reports/Codex/status/workspace-hygiene-acl-remediation-diff-2026-02-22T13-12-11Z.diff`
+  - `System/Reports/Codex/status/workspace-hygiene-acl-remediation-summary-2026-02-22T13-12-11Z.md`
+- [x] Post-pass validation:
+  - hygiene report regenerated: `System/Reports/Codex/status/workspace-hygiene-latest.md`
+  - `Non-Canonical Policy/Role File Copies: none`
+  - `Potential Canonical Root Drift: none`
+  - remediation validation status: `clean`
+
+## 2026-02-22 08:46 ET — Post-N2 error-signature hardening pack (N6/N3)
+- [x] Captured baseline recurring signatures from `Ops/RAZSOC/facts/2026-02-22.md`.
+- [x] Applied cron command-safety guardrails to jobs `0f2a9abc`, `e881f4eb`, `7924d04d`.
+- [x] Seeded missing DreamLab soul files (11 created) to mitigate ENOENT lane failures.
+- [x] Verified war-room snapshot command-path with exact Windows-safe wrapper.
+- [x] Ran post-hardening safety/parity/lint checks (`VIOLATIONS=0`; parity/workflow/reporting all exit 0).
+- [x] N2/CoS post-hardening re-adjudication artifact published and linked: `System/Reports/Codex/tasks/checkpoints/n2-hardening-readjudication-2026-02-22.md`.
+- Evidence root: `System/Reports/Codex/tasks/checkpoints/error-signature-hardening-20260222-084646/`.
+
+## 2026-02-22 09:18 ET — Growth evidence completion + drift flag clearance
+- [x] Created role-complete daily growth evidence ledger: `System/Reports/RAZSOC/growth/2026-02-22.md`.
+- [x] Created weekly review artifact: `System/Reports/RAZSOC/growth/2026-W08-weekly-review.md`.
+- [x] Updated scoreboard 2026-02-22 section from scaffold to evidence-linked partial scoring.
+- [x] Re-adjudicated drift flags in scoreboard: DF-1 CLEARED, DF-2 CLEARED, DF-3 CLEARED_FOR_CURRENT_CYCLE.
+- [x] Synced runlog + duty board deltas and added post-update parity/lint gate evidence.
+- Evidence bundle: `System/Reports/Codex/tasks/checkpoints/growth-drift-clearance-20260222-092514/`.
+
+## 2026-02-22 09:29 ET — WhatsApp elevated gate remediation
+- [x] Reproduced and traced failure signature in session log: `Failing gates: enabled ... provider=whatsapp session=agent:main:main`.
+- [x] Patched runtime config `C:\Users\aleks\.openclaw\openclaw.json`:
+  - ensured `tools.elevated.enabled: true`
+  - added `tools.elevated.allowFrom.whatsapp` entries
+  - added `agents.list[main].tools.elevated.enabled: true`
+  - mirrored global elevated allowlists into `agents.list[main].tools.elevated.allowFrom` to prevent agent-level provider drift.
+- [x] Corrected regression introduced during first patch where webchat agent-level allowFrom became empty.
+- [x] Recycled gateway service (`openclaw gateway stop` -> `openclaw gateway start`) and verified runtime health `OK`.
+- [x] Verification snapshots:
+  - `openclaw config get tools.elevated.enabled` => `true`
+  - `openclaw config get tools.elevated.allowFrom.whatsapp` => expected list present
+  - `openclaw config get agents.list[0].tools.elevated.enabled` => `true`
+  - `openclaw sandbox explain --session agent:main:main --json` => webchat elevated `enabled=true`, `allowedByConfig=true`, `failures=[]`.
+- [ ] Pending live-optest: trigger one real WhatsApp `/elevated` turn and confirm no `enabled` gate failure.
+
+## Canon + Governance Drift/Sprawl Review (2026-02-22)
+- [x] Reloaded mandatory governance stack (`System/Config/razsoc_policy.yaml`, `System/Config/razsoc_roles.yaml`, layer docs, memory files) before execution.
+- [x] Ran governance/layer/hygiene validators:
+  - `node System/automation/openclaw/validateGovernanceConformance.js`
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js`
+  - `bash System/skills/openclaw-workspace-hygiene/scripts/workspace_hygiene_scan.sh`
+  - `node System/automation/razsoc/workflowLint.js`
+  - `node System/automation/razsoc/reportingRequirementsLint.js`
+- [x] Remediated launcher drift in `/mnt/c/Users/aleks/.openclaw/gateway.cmd` by restoring required guards:
+  - `if /I "%CD%"=="C:\Windows\System32" cd /d "%USERPROFILE%"`
+  - `title OpenClaw Gateway`
+- [x] Remediated memory naming governance drift:
+  - moved `memory/2026-02-22-0601.md` -> `memory/MEMORY_2026-02-22_0601-session-log.md`
+  - replaced legacy filename with redirect stub containing `renamed_to:`
+- [x] Executed full pilot validation lane:
+  - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error`
+- [x] Final gate status:
+  - `validateGovernanceConformance.js` -> PASS
+  - `validateOpenClawLayerStack.js` -> PASS
+  - `memory-naming-validation-latest.md` -> errors `0`
+  - `memory-schema-validation-latest.md` -> errors `0`
+  - `clawvault-shadow-pilot-guardrail-latest.md` -> `fallback_recommended: false`
+  - `workspace-hygiene-latest.md` -> `Potential Canonical Root Drift: none`, `Non-Canonical Policy/Role File Copies: none`
+
+## Workspace Hygiene Mirror-Parity Remediation (2026-02-22)
+- [x] Compute mirror parity deltas from `System/skills` to `.codex/skills` and `/mnt/c/Users/aleks/.openclaw/skills`.
+- [x] Apply non-destructive mirror sync (copy missing directories only; no overwrite/delete).
+- [x] Re-run hygiene scan and verify parity closure.
+- [x] Run OpenClaw skill runtime sanity check after expansion.
+
+## Review (2026-02-22) - Workspace Hygiene Mirror-Parity Remediation
+- [x] Sync artifact: `System/Reports/Codex/status/workspace-hygiene-mirror-sync-2026-02-22T13-57-37Z.md`
+  - added to `.codex/skills`: `2`
+  - added to `.openclaw/skills`: `50`
+- [x] Post-sync parity counts:
+  - missing codex mirrors: `0`
+  - missing openclaw mirrors: `0`
+- [x] Post-sync hygiene report:
+  - `System/Reports/Codex/status/workspace-hygiene-latest.md`
+  - all `System/skills` entries now `codex=present, openclaw=present`
+  - `Non-Canonical Policy/Role File Copies: none`
+  - `Potential Canonical Root Drift: none`
+- [x] Runtime sanity:
+  - `openclaw skills check` -> exit `0` (`Total: 136`, `Eligible: 121`, `Missing requirements: 15` non-blocking environment/tool prerequisites)
+- [x] Runtime check artifact:
+  - `System/Reports/Codex/status/openclaw-skills-check-2026-02-22T13-59-56Z.txt`
+
+## 2026-02-22 10:06 ET — N2/CoS post-hardening re-adjudication artifact (closure)
+- [x] Published adjudication artifact: `System/Reports/Codex/tasks/checkpoints/n2-hardening-readjudication-2026-02-22.md`.
+- [x] Updated N2 packet to released-monitor disposition (`status: executed_released_watch`, `QUARANTINE_RELEASE`).
+- [x] Synced runlog + duty board to released-monitor state and follow-up watch actions.
+- [x] Re-ran command-surface gates (parity/workflow/reporting) all PASS with evidence bundle: `System/Reports/Codex/tasks/checkpoints/n2-hardening-readjudication-gates-20260222-1006/`.
+
+## 2026-02-22 10:12 ET — Process drift remediation (authority execution)
+- [x] Root-cause fixed: codified internal self-approvable blocker closure rule (no repeated passive pending).
+- [x] Patched CUB hourly cron prompt with authority-execution lock + pending-artifact existence check + repeat-blocker auto-corrective requirement.
+- [x] Patched Unit SITREP cron prompt with same authority-execution lock behavior.
+- [x] Extended `workflowLint.js` to enforce authority-execution contract presence on critical announce jobs (CUB + SITREP) as hard-fail check.
+- [x] Updated durable lessons: blocker closure must execute same slice when within authority.
+- [x] Validation: `RAZSOC_WORKFLOW_LINT_OK`, `MISSION_CONTROL_CONTRACT_PARITY_OK`, `RAZSOC_REPORTING_REQUIREMENTS_LINT_OK`.
+
+## Degradation Self-Diagnostic Routine Implementation (2026-02-22)
+- [x] Add YAML-first diagnostics contract in `System/Config/razsoc_policy.yaml` (`contract_version`, `profiles`, `severity_thresholds`, `safe_auto_fix_allowlist`, `freshness_slas`).
+- [x] Implement registry-driven diagnostics engine:
+  - `System/automation/razsoc/runDegradationDiagnostics.js`
+- [x] Add command wrappers:
+  - `System/automation/razsoc/runDegradationDiagnostics.sh`
+  - `System/automation/razsoc/runDegradationDiagnostics.ps1`
+- [x] Add cron installer:
+  - `System/automation/openclaw/installDegradationDiagnosticsCron.js`
+- [x] Integrate daily diagnostics gate into pilot runner:
+  - `System/automation/razsoc/runPilotDaily.sh`
+- [x] Extend gateway startup remediation to enforce `gateway.cmd` base guards:
+  - `System/automation/openclaw/remediateGatewayStartupGuards.js`
+- [x] Add diagnostics test suite with parser + fixture integration + regression coverage:
+  - `System/automation/razsoc/runDegradationDiagnostics.test.js`
+- [x] Update command-surface docs:
+  - `AGENTS.md`
+  - `System/Docs/04_Processes_and_Workflows_SOP.md`
+  - `System/Docs/Guides/OpenClaw + Obsidian Integration.md`
+
+## Review (2026-02-22) - Degradation Self-Diagnostic Routine Implementation
+- [x] Syntax/parse gates:
+  - `node --check System/automation/razsoc/runDegradationDiagnostics.js`
+  - `node --check System/automation/openclaw/installDegradationDiagnosticsCron.js`
+  - `node --check System/automation/razsoc/runDegradationDiagnostics.test.js`
+  - `bash -n System/automation/razsoc/runDegradationDiagnostics.sh`
+  - `bash -n System/automation/razsoc/runPilotDaily.sh`
+  - `python3` YAML parse for `System/Config/razsoc_policy.yaml` -> `RAZSOC_POLICY_YAML_OK`
+- [x] Test suite:
+  - `node --test System/automation/razsoc/runDegradationDiagnostics.test.js` -> `pass 9 / fail 0`
+- [x] Runtime dry/live command checks:
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile=startup --strict --auto-fix=safe`
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile=daily --strict --auto-fix=safe`
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile=hourly --auto-fix=off`
+  - `node System/automation/openclaw/installDegradationDiagnosticsCron.js --dry-run`
+- [x] Canon sync + layer parity remediation:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js`
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS
+- [x] Memory naming drift repair executed:
+  - `python3 System/automation/razsoc/normalizeLegacyMemoryStubs.py` -> converted `1`
+  - `python3 System/automation/razsoc/validateMemoryNaming.py --strict --ensure-today-gpt` -> errors `0`
+- [x] Cross-context runtime version skew remediated:
+  - WSL updated from `2026.2.19-2` -> `2026.2.21-2` (npm install path with `--ignore-scripts --omit=optional`)
+- [x] Residual active degradation cleared:
+  - `gateway_reachability_cross_context` now auto-remediates via `node System/automation/openclaw/remediateGatewayCrossContext.js`.
+  - Current strict artifact is green: `System/Reports/Codex/status/degradation-diagnostics-latest.json`.
+
+## Degradation Diagnostics Completion - Cross-Context Gateway Closure (2026-02-22)
+- [x] Added safe remediation helper for cross-context gateway drift:
+  - `System/automation/openclaw/remediateGatewayCrossContext.js`
+- [x] Extended diagnostics auto-fix allowlist + handler:
+  - `System/automation/razsoc/runDegradationDiagnostics.js`
+  - `System/Config/razsoc_policy.yaml`
+- [x] Updated command-surface mirrors:
+  - `AGENTS.md`
+  - `System/Docs/04_Processes_and_Workflows_SOP.md`
+  - `System/Docs/Guides/OpenClaw + Obsidian Integration.md`
+- [x] Added regression assertion for allowlist wiring:
+  - `System/automation/razsoc/runDegradationDiagnostics.test.js`
+- [x] Reproduced failure path (`wsl down / windows up`) and verified remediation execution.
+- [x] Cleared subsequent layer-stack parity drift by syncing template stack:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js`
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js`
+- [x] Final strict daily diagnostics pass:
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile=daily --strict --auto-fix=safe`
+
+## Review (2026-02-22) - Degradation Diagnostics Completion
+- [x] Runtime auto-fix evidence captured in `System/Reports/Codex/status/degradation-diagnostics-20260222-154015.json`:
+  - `gateway_reachability_cross_context` remediation status `fixed`
+  - handler `node System/automation/openclaw/remediateGatewayCrossContext.js`
+- [x] Final gate clear artifact:
+  - `System/Reports/Codex/status/degradation-diagnostics-latest.json`
+  - `highest_severity: none`, `strict_exit: false`, `fail_count: 0`
+- [x] Test suite re-run after wiring changes:
+  - `node --test System/automation/razsoc/runDegradationDiagnostics.test.js` -> pass 10 / fail 0.
+- [x] Installed diagnostics scheduler jobs:
+  - `node System/automation/openclaw/installDegradationDiagnosticsCron.js`
+  - created `RAZSOC Degradation Diagnostics (hourly sentinel)`
+  - created `RAZSOC Degradation Diagnostics (daily full-sweep)`
+- [x] Validated integrated pilot lane with new diagnostics gate:
+  - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` -> completed successfully.
