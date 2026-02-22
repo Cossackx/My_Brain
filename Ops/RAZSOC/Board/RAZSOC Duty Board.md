@@ -1,6 +1,6 @@
 ---
 title: RAZSOC Strategic Operations Picture
-updated_on: 2026-02-22T12:51:00-05:00
+updated_on: 2026-02-22T15:25:20-05:00
 ---
 
 ## 1) Executive Summary (What matters now)
@@ -116,7 +116,21 @@ updated_on: 2026-02-22T12:51:00-05:00
 ## 9) Next 3 Actions
 1. **Execute post-release follow-up pack (N2/N6/CoS):** publish signature-delta artifact, normalize cron safety JSON trace, and lock gateway state policy note.
 2. **Sustain hardening controls (N6/N3):** monitor for recurrence of command/read/path signatures on hourly lanes and patch regressions same-cycle.
-3. **Finalize gateway task-state policy (N6):** confirm desired-state contract (monitor-only Ready/stopped vs always-running) with one authoritative ops note and enforcement path.
+3. **Resolve WhatsApp live-optest blocker (N6):** enable/link WhatsApp channel in active runtime (or switch to a runtime/profile with WhatsApp support), then rerun one real `/elevated` turn.
+
+## 10) Latest Delta (2026-02-22 15:25 ET) - cron-control-plane freshness closeout blocked at admin boundary
+- Freshness closeout attempt detected a new control-plane incident: `openclaw cron status --json` timed out twice (30s gateway timeout) while `openclaw status` remained healthy.
+- Recovery branch was executed same-cycle: `openclaw gateway restart` attempted but failed health checks due service-token mismatch + port conflict (`127.0.0.1:18789` already in use by `node.exe` pid `31780`).
+- `openclaw doctor` confirmed gateway service config drift (service command missing gateway subcommand + missing service token alignment).
+- Auto-remediation attempt `openclaw doctor --fix --force --yes` is blocked by Windows privilege boundary (`schtasks create failed: ERROR: Access is denied`).
+- Immediate next action: run doctor fix from elevated PowerShell (admin), rerun `openclaw cron status --json`, then append same-cycle recovery evidence to runlog/board.
+
+## 10) Latest Delta (2026-02-22 14:21 ET) - WhatsApp live-optest blocked by channel support
+- Approved live-optest execution ran through four command paths (`channels`, `directory`, `login`, `message send`) with artifacted outputs.
+- Runtime channel inventory exposes Telegram only; WhatsApp paths returned `Unsupported channel: whatsapp` / `Unknown channel: whatsapp`.
+- Prior elevated-gate config fix remains present (`tools.elevated.allowFrom.whatsapp` exists in both global and agent config).
+- Disposition: blocker remains open as runtime/channel support issue, not an elevated-gate policy failure.
+- Checkpoint artifact: `System/Reports/Codex/tasks/checkpoints/whatsapp-elevated-live-optest-20260222-142117/`.
 
 ## 10) Latest Delta (2026-02-22 12:51 ET) - canonical source-path remediation + SITREP rerun closure
 - Restored canonical source visibility in active workspace alias by attaching symlink roots: `Ops -> ../Ops`, `System -> ../System`, `Tasks -> ../Tasks`, `TaskNotes -> ../TaskNotes`.
