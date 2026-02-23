@@ -1,5 +1,148 @@
 # Task Plan
 
+## CCDR Final Approval Authority Drift Fix (2026-02-22 20:31 ET)
+- [x] Wire CCDR final approval automation into the daily pilot sequence before command-deck publication.
+- [x] Enforce insight closeout gate requirement: `supervisor_role=CCDR` and CCDR-owned `supervisor_validation_ref`.
+- [x] Update YAML canon + markdown mirrors with non-delegable accountability doctrine ("delegate responsibility, never accountability").
+- [x] Re-run insight lane pipeline (`route -> final approval -> command deck -> closeout gate`) and verify closed-state truth.
+- [x] Remediate memory naming drift (`memory/2026-02-22-2042.md` legacy non-stub -> canonical `MEMORY_...` + redirect stub).
+- [x] Run full pilot daily runner and capture residual runtime watch item (`gateway_windows_up_wsl_down`) with monitor-only disposition.
+
+## Review (2026-02-22) - CCDR Final Approval Authority Drift Fix
+- [x] Automation wiring:
+  - `System/automation/razsoc/runPilotDaily.sh` now runs `applyCcdrInsightFinalApproval.js` between routing and command-deck publish.
+  - Latest outputs list now includes `System/Reports/Codex/status/ccdr-final-approval-latest.md`.
+- [x] Gate hardening:
+  - `System/automation/razsoc/enforceInsightCloseoutGate.js` now fail-closes if routed packets are not `supervisor_role: CCDR` or if closeout refs do not resolve to CCDR-owned supervisor-validation logs.
+- [x] Policy and instruction updates landed:
+  - `System/Config/razsoc_policy.yaml`
+  - `System/Config/razsoc_roles.yaml`
+  - `AGENTS.md`, `BRAIN.md`
+  - `System/Docs/04_Processes_and_Workflows_SOP.md`
+  - `System/Docs/SOP/Task Closeout & Supervisor Validation SOP.md`
+  - `System/Docs/SOP/Universal Instruction Enforcement SOP.md`
+  - `System/Docs/Reference/Directives.md`
+  - `System/Docs/Reference/Inquiry Decision Matrix.md`
+- [x] Checkpoint artifact:
+  - `System/Reports/Codex/tasks/checkpoints/ccdr-final-approval-authority-drift-fix-2026-02-23.md`
+- [x] Verification outcomes:
+  - `node System/automation/razsoc/routeInsightsToExecution.js --date=2026-02-22` -> routed `25`.
+  - `node System/automation/razsoc/applyCcdrInsightFinalApproval.js --date=2026-02-22` -> processed `25` (`24 executed`, `1 canceled`, findings `0`).
+  - `node System/automation/razsoc/publishInsightCommandDeck.js --date=2026-02-22` -> `status: closed`.
+  - `node System/automation/razsoc/enforceInsightCloseoutGate.js` -> `gate_result: pass`, findings `0`.
+  - `python3 System/automation/razsoc/validateMemoryNaming.py --strict --ensure-today-gpt` -> `Errors: 0`.
+  - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` -> residual failures: cross-context gateway reachability (P1 watch), resolved memory naming failure.
+
+## Gateway Cross-Context Blocker Debug (2026-02-22 21:34 ET)
+- [x] Reproduce blocker evidence from `degradation-diagnostics-latest.json` and isolate runtime signature pattern.
+- [x] Patch diagnostics classifier to treat Windows-healthy + WSL loopback-boundary failures as monitor-only non-blocking posture.
+- [x] Re-run strict daily diagnostics and full pilot daily runner to confirm strict-gate recovery.
+- [x] Update YAML canon + SOP mirror with explicit runtime topology exception contract.
+
+## Review (2026-02-22) - Gateway Cross-Context Blocker Debug
+- [x] Root cause confirmed from live evidence:
+  - `gateway_reachability_cross_context` failed on WSL with `gateway target: ws://127.0.0.1` / `source: local loopback` while Windows probe passed (`Telegram: ok`).
+- [x] Runtime classifier patch landed:
+  - `System/automation/razsoc/runDegradationDiagnostics.js`
+  - Added bounded detector `isLoopbackBoundaryRun(...)` and pass-path summary/signature `gateway_wsl_loopback_boundary` when Windows gateway health is healthy and WSL failure matches loopback-boundary transport pattern.
+  - Added regression test coverage in `System/automation/razsoc/runDegradationDiagnostics.test.js` for the new loopback-boundary classification path.
+- [x] Strict diagnostics verification:
+  - `bash System/automation/razsoc/runDegradationDiagnostics.sh --profile daily --strict --auto-fix=safe` -> `highest_severity: none`, `strict_exit: false`, `strict_reason: strict_gate_clear`.
+  - `System/Reports/Codex/status/degradation-diagnostics-latest.md` now reports gateway check as `pass` with summary `Gateway reachable in Windows context; WSL loopback boundary detected (monitor-only).`
+- [x] Full pilot verification:
+  - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` -> `Pilot daily run completed successfully.`
+- [x] Test suite verification:
+  - `node System/automation/razsoc/runDegradationDiagnostics.test.js` -> `11 passed`, `0 failed`.
+- [x] Canon + mirror updates:
+  - YAML-first contract update: `System/Config/razsoc_policy.yaml` (`degradation_diagnostics.runtime_topology_exceptions.gateway_wsl_loopback_boundary`).
+  - SOP mirror update: `System/Docs/04_Processes_and_Workflows_SOP.md` (Layered degradation diagnostics lane topology exception note).
+
+## Reply-Contract Violation Remediation (2026-02-22 19:20 ET)
+- [x] Patch cron identity headers that used ASCII arrow (`->`) to contract-compliant Unicode arrow (`→`) for transport announcements.
+- [x] Reset reply-drift baseline to post-remediation timestamp for clean forward monitoring.
+- [x] Validate drift guard returns `NO_REPLY` after remediation.
+
+## Review (2026-02-22) - Reply-Contract Violation Remediation
+- Patched cron jobs:
+  - `RAZSOC Commander's Update Brief (CUB) hourly` (`e881f4eb-3288-4792-95f1-5c38e4b484b2`)
+  - `RAZSOC Unit SITREPs (every 4h)` (`7924d04d-4c46-4851-bbbd-8e1384390e64`)
+- Updated drift-monitor baseline in:
+  - `RAZSOC Reply Lint (every 2h, alert on drift)` (`09a066f0-a972-4a4e-b351-a2a571fc7730`)
+  - `--since 2026-02-22T23:19:20.539Z`
+- Verification:
+  - `node System/automation/razsoc/responseDriftGuard.js --since 2026-02-22T23:19:20.539Z` -> `NO_REPLY`
+  - Manual run: `cron.run(jobId=09a066f0-a972-4a4e-b351-a2a571fc7730)` -> completed `ok` with no alert.
+- Supervisor validation artifact:
+  - `Ops/RAZSOC/Logs/2026-02-22-supervisor-validation-reply-contract-remediation.md`
+
+
+## Outstanding Insight Backlog Closeout (2026-02-22 16:46 ET)
+- [x] Execute CoS/DCOM lane validation on active insight packets and verify owner-role routing/evidence path integrity.
+- [x] Close all active insight TaskNotes and paired Decisions using policy-compliant authority transitions (`approved -> executed`, `packaged -> canceled` for defer).
+- [x] Publish CCDR supervisor validation artifact and bind `supervisor_validation_ref` to every closed packet.
+- [x] Re-publish command deck status and enforce closeout gate against updated packet states.
+- [x] Confirm zero outstanding insight-task packets in canonical `TaskNotes` surface.
+
+## Review (2026-02-22) - Outstanding Insight Backlog Closeout
+- [x] CCDR supervisor validation artifact published:
+  - `Ops/RAZSOC/Logs/2026-02-22-supervisor-validation-insight-backlog-closeout.md`
+- [x] Insight packet closeout completed:
+  - `57` active insight TaskNotes closed (`56` executed, `1` canceled/defer) with paired decision packets aligned.
+  - checkpoint evidence: `System/Reports/Codex/tasks/checkpoints/insight-backlog-closeout-2026-02-22T21-46-40-640Z/closeout-summary.json`
+- [x] Command-deck projection now reflects packet truth-state instead of hardcoded pending:
+  - `System/automation/razsoc/publishInsightCommandDeck.js`
+  - `node System/automation/razsoc/publishInsightCommandDeck.js` -> `status: closed`
+- [x] Closeout gate verification:
+  - `node System/automation/razsoc/enforceInsightCloseoutGate.js` -> `gate_result: pass`, `findings_total: 0`
+- [x] Outstanding queue proof:
+  - active `TaskNotes/*Insight*` non-done count -> `0`
+
+## GSD Pattern Assimilation Packet (2026-02-22 16:58 ET)
+- [x] Patch canonical SOP with GSD-derived execution subset (verification ladder, wave routing, state digest rule, context-threshold behavior).
+- [x] Add reusable verification template for Exists/Substantive/Wired/Functional evidence capture.
+- [x] Add context monitor implementation spec aligned to OpenClaw hooks + governance gates.
+- [x] Run required template-stack/runtime validators and publish checkpoint artifact.
+
+## Review (2026-02-22) - GSD Pattern Assimilation Packet
+- [x] SOP patch landed:
+  - `System/Docs/04_Processes_and_Workflows_SOP.md`
+  - section: `GSD-derived execution subset (approved assimilation)`
+- [x] Verification template added:
+  - `System/templates/RAZSOC - Verification Evidence Ladder.md`
+- [x] Context monitor spec added:
+  - `System/Docs/Guides/OpenClaw Context Threshold Monitor Spec.md`
+- [x] Validation evidence:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js` -> PASS
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS
+- [x] Checkpoint artifact:
+  - `System/Reports/Codex/tasks/checkpoints/gsd-pattern-assimilation-2026-02-22.md`
+
+
+## Post-Release Follow-Up Gate Closure (2026-02-22 15:53 ET)
+- [x] Keep N2 diagnostics lane monitor-only unless new failing evidence appears.
+- [x] Keep gateway recurrence on watch-only unless signals worsen.
+- [x] Close post-release follow-up artifacts before opening new intake lanes.
+- [x] Publish closure packet and sync runlog + duty board with the updated gate state.
+
+## Review (2026-02-22) - Post-Release Follow-Up Gate Closure
+- [x] Closure packet published:
+  - `System/Reports/Codex/tasks/checkpoints/n2-post-release-followup-closeout-20260222-155356/`
+- [x] Signature-delta follow-up artifact published:
+  - `System/Reports/Codex/tasks/checkpoints/n2-post-release-followup-closeout-20260222-155356/signature-counts-delta.md`
+  - `System/Reports/Codex/tasks/checkpoints/n2-post-release-followup-closeout-20260222-155356/signature-counts-delta.json`
+- [x] `cron-message-safety-scan.json` normalized with structured fields (non-empty payload):
+  - `System/Reports/Codex/tasks/checkpoints/error-signature-hardening-20260222-084646/cron-message-safety-scan.json`
+  - `scanned_job_count=26`, `jobs_with_message_count=26`, `evaluated_signatures` present, `violation_count=0`
+- [x] Gateway watch policy note published:
+  - `System/Reports/Codex/tasks/checkpoints/n2-post-release-followup-closeout-20260222-155356/gateway-recurrence-watch-policy.md`
+- [x] Fresh runtime evidence for watch posture:
+  - `cmd.exe /c "openclaw cron status --json"` -> `exit=0`
+  - `cmd.exe /c "openclaw status"` -> `exit=0`
+  - `cmd.exe /c "openclaw gateway health"` -> `exit=0`
+- [x] Command-surface sync complete:
+  - `Ops/RAZSOC/Logs/2026-02-22-runlog.md`
+  - `Ops/RAZSOC/Board/RAZSOC Duty Board.md`
+
 ## Control-Plane Timeout Recovery Verification (2026-02-22)
 - [x] Re-run `openclaw cron status --json` after the `10:29 ET` timeout incident and branch to gateway restart only if rerun fails.
 - [x] Verify gateway/runtime health (`openclaw gateway health`, `openclaw gateway status`, `openclaw status`) after rerun.
@@ -1132,7 +1275,7 @@ eferences/, scripts/scratchpad.js).
   - `openclaw config get tools.elevated.allowFrom.whatsapp` => expected list present
   - `openclaw config get agents.list[0].tools.elevated.enabled` => `true`
   - `openclaw sandbox explain --session agent:main:main --json` => webchat elevated `enabled=true`, `allowedByConfig=true`, `failures=[]`.
-- [ ] Pending live-optest: trigger one real WhatsApp `/elevated` turn and confirm no `enabled` gate failure.
+- [x] Live-optest requirement waived/de-scoped per SECWAR directive (`2026-02-22`: "I don't use whatsapp right now"); keep evidence packet for future reactivation: `System/Reports/Codex/tasks/checkpoints/whatsapp-elevated-live-optest-20260222-142117/`.
 
 ## Canon + Governance Drift/Sprawl Review (2026-02-22)
 - [x] Reloaded mandatory governance stack (`System/Config/razsoc_policy.yaml`, `System/Config/razsoc_roles.yaml`, layer docs, memory files) before execution.
@@ -1276,3 +1419,211 @@ eferences/, scripts/scratchpad.js).
   - created `RAZSOC Degradation Diagnostics (daily full-sweep)`
 - [x] Validated integrated pilot lane with new diagnostics gate:
   - `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` -> completed successfully.
+
+## Completion (2026-02-22) - 30m Heartbeat Telegram Telemetry Guard
+- [x] Updated `HEARTBEAT.md` cadence language to align execution with 30-minute heartbeat scheduler while keeping proactive alert noise capped.
+- [x] Added explicit Telegram telemetry deconfliction step to heartbeat checks with single-pass auto-remediation order.
+- [x] Synced OpenClaw template stack after heartbeat governance update:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js`
+- [x] Restored gateway launcher guard lines in `C:\Users\aleks\.openclaw\gateway.cmd` required by layer validator.
+- [x] Re-ran layer stack validation:
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS.
+
+## Governance Docs Refresh (2026-02-22)
+- [x] Restored gateway launcher guard drift in `C:\Users\aleks\.openclaw\gateway.cmd` while preserving service command visibility for `openclaw gateway status`.
+- [x] Updated YAML canon first:
+  - `System/Config/razsoc_policy.yaml` (`runtime_controls.openclaw_gateway.launcher_guard_integrity`)
+  - `System/Config/razsoc_roles.yaml` (new `capability_overlays.openclaw_gateway`, `updated_on` refresh)
+- [x] Updated governance markdown mirrors:
+  - `System/Docs/Reference/Directives.md`
+  - `System/Docs/Reference/Inquiry Decision Matrix.md`
+  - `System/Docs/Reference/HQ Admin Governance Brief v1.0.md`
+  - `System/Docs/Reference/HQ Roles & Responsibilities Matrix v1.0.md`
+- [x] Updated instruction-layer governance surfaces:
+  - `AGENTS.md`
+  - `System/Docs/04_Processes_and_Workflows_SOP.md`
+- [x] Ran governance sync/validation closeout:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js`
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js`
+  - `node System/automation/openclaw/validateGovernanceConformance.js`
+  - `node System/automation/razsoc/workflowLint.js`
+  - `node System/automation/razsoc/reportingRequirementsLint.js`
+  - `python3` YAML parse check for both canonical YAML files.
+
+## Review (2026-02-22) - Governance Docs Refresh
+- [x] YAML parse gate: `YAML_OK 2`.
+- [x] Layer parity gate: `validateOpenClawLayerStack.js` PASS after launcher guard restoration.
+- [x] Governance conformance gate: PASS (`check_count=6`, `failed_checks=[]`).
+- [x] Workflow/reporting lints: `RAZSOC_WORKFLOW_LINT_OK`, `RAZSOC_REPORTING_REQUIREMENTS_LINT_OK`.
+- [x] Gateway status evidence confirms command now includes both guard markers and `gateway --port 18789` subcommand.
+
+## Recommended Actions Execution (2026-02-22, post-governance refresh)
+- [x] Repaired gateway service-state fidelity (task runtime mismatch):
+  - stopped orphan listener on `127.0.0.1:18789`
+  - restarted gateway via Scheduled Task path
+  - verified `openclaw gateway status` -> `Runtime: running`
+  - verified `openclaw status --all` -> `Gateway service ... running`
+- [x] Executed deep security audit:
+  - initial result: `1 critical` (`video-transcript-downloader` high-risk patterns)
+- [x] Applied safe reversible remediation:
+  - moved skill from `/mnt/c/Users/aleks/.openclaw/skills/video-transcript-downloader`
+    to `/mnt/c/Users/aleks/.openclaw/skills/_quarantine/2026-02-22T20-37-50Z/video-transcript-downloader`
+- [x] Re-ran deep security audit:
+  - result: `0 critical · 0 warn · 2 info`
+- [x] Revalidated governance/runtime gates after remediation:
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> PASS
+  - `node System/automation/openclaw/validateGovernanceConformance.js` -> PASS
+
+## Review (2026-02-22) - Recommended Actions Execution
+- [x] Gateway control-plane state is now consistent (`Scheduled Task running` + RPC probe `ok`).
+- [x] Critical skill-safety finding resolved via quarantine without destructive deletion.
+- [x] Residual security infos are expected posture notes (`hooks.token in config`, attack-surface summary) with no active critical/warn findings.
+
+## Permanent Removal Execution (2026-02-22, video-transcript-downloader)
+- [x] User-authorized permanent delete executed for quarantined skill path:
+  - `C:\Users\aleks\.openclaw\skills\_quarantine\2026-02-22T20-37-50Z\video-transcript-downloader`
+- [x] Verified deletion (`REMOVAL_CONFIRMED`).
+- [x] Removed now-empty quarantine timestamp directory:
+  - `C:\Users\aleks\.openclaw\skills\_quarantine\2026-02-22T20-37-50Z`
+- [x] Re-ran security audit:
+  - `openclaw security audit --deep` -> `0 critical · 0 warn · 2 info`.
+
+## TaskNotes Open-Count Closure (2026-02-23 20:45 ET)
+- [x] Revalidate the active 25 routed insight task packets under CCDR final approval authority.
+- [x] Close stale archived/pruned insight TaskNotes still marked `task_status: doing` with paired decision packet updates.
+- [x] Publish supervisor-validation artifact and checkpoint evidence.
+- [x] Verify `TaskNotes` recursive open count is zero.
+
+## Review (2026-02-23) - TaskNotes Open-Count Closure
+- [x] Active 25 packet set:
+  - `node System/automation/razsoc/applyCcdrInsightFinalApproval.js --date=2026-02-22 --timezone=America/New_York`
+  - result: `processed=0`, `unchanged=25`, findings `0`.
+- [x] Archived prune packet set closed:
+  - `12` task packets in `TaskNotes/_Archive/insight-router-2026-02-20-prune/` moved to `status=closed`, `task_status=done`, `approval_state=executed`, `closeout_gate=supervisor_validated` with paired archived decision updates.
+- [x] Supervisor validation artifact:
+  - `Ops/RAZSOC/Logs/2026-02-23-supervisor-validation-insight-archive-prune-closeout.md`
+- [x] Checkpoint artifact:
+  - `System/Reports/Codex/tasks/checkpoints/tasknotes-open-closure-2026-02-23.md`
+- [x] Verification:
+  - recursive TaskNotes open count: `0`
+  - `node System/automation/razsoc/enforceInsightCloseoutGate.js` -> `gate_result=pass`.
+
+## CCDR Accountability Assumption Report (2026-02-23 20:45 ET)
+- [x] Resolve Telegram target and verify channel health.
+- [x] Send direct CCDR accountability-assumption report to SECWAR via OpenClaw Telegram bot.
+- [x] Persist user preference for Telegram delivery in session continuity memory.
+
+## Review (2026-02-23) - CCDR Accountability Assumption Report
+- [x] Telegram target resolved:
+  - `openclaw directory peers list --channel telegram --json` -> `6171404801`
+- [x] Channel health validated:
+  - `openclaw channels status --probe` -> Telegram `running`, `works`.
+- [x] Delivery proof:
+  - OpenClaw log action `message send` returned `ok: true`, `chatId: 6171404801`, `messageId: 1808`.
+
+## Proactivity + Role-Governance Expansion (2026-02-23 23:09 ET)
+- [x] Enforce proactive lane behavior in canonical policy:
+  - added `delegation_contract.proactivity_control_contract` in `System/Config/razsoc_policy.yaml`
+  - defined required packet fields, first-action SLA matrix, stale-lane threshold, role trigger matrix, strict fail paths
+- [x] Enforce per-role governance docs as canonical operating surface:
+  - added `delegation_contract.role_governance_docs_contract` in `System/Config/razsoc_policy.yaml`
+  - set canonical output to `Ops/RAZSOC/agents/` and strict `UNVERIFIED` fail-close posture
+- [x] Implemented proactivity enforcement automation:
+  - created `System/automation/razsoc/runProactivitySweep.py`
+  - writes latest + stamped artifacts under `System/Reports/Codex/status/`
+- [x] Implemented per-role governance-doc sync automation:
+  - created `System/automation/razsoc/syncRoleGovernanceDocs.py`
+  - generated role docs for all 40 agents + index in `Ops/RAZSOC/agents/README.md`
+- [x] Integrated both controls into pilot daily lane:
+  - updated `System/automation/razsoc/runPilotDaily.sh`
+  - added proactivity/role-governance outputs to `AGENTS.md` status review list
+  - updated `BRAIN.md` and `System/Docs/Reference/Inquiry Decision Matrix.md` mirrors
+
+## Review (2026-02-23) - Proactivity + Role-Governance Expansion
+- [x] Validation gates:
+  - `python3 -m py_compile System/automation/razsoc/syncRoleGovernanceDocs.py System/automation/razsoc/runProactivitySweep.py` -> pass
+  - `bash -n System/automation/razsoc/runPilotDaily.sh` -> pass
+  - YAML parse check of canonical config files -> pass
+- [x] Runtime proofs:
+  - `python3 System/automation/razsoc/syncRoleGovernanceDocs.py` -> role sync complete (40 docs)
+  - `python3 System/automation/razsoc/runProactivitySweep.py --strict` -> gate pass
+- [x] Full pilot closeout:
+  - reran `bash System/automation/razsoc/runPilotDaily.sh --continue-on-error` after layer sync/remediation
+  - final pilot run completed with proactivity + role-governance lanes active and passing.
+
+## Night Self-Development Cadence (2026-02-22 23:22 ET)
+- [x] Added canonical nightly cadence contract for every RAZSOC role:
+  - `delegation_contract.night_self_development_cadence_contract` in `System/Config/razsoc_policy.yaml`
+  - windows fixed to `01:00` and `05:00` America/New_York, `60` minutes each
+- [x] Extended fleet growth obligations for role-level enforcement:
+  - updated `System/Config/razsoc_roles.yaml:fleet_growth_obligations` with nightly windows, curiosity/truth doctrine, and canon capture requirements.
+- [x] Added nightly runtime automation:
+  - created `System/automation/razsoc/runNightSelfDevelopmentCadence.py`
+  - outputs status artifacts:
+    - `System/Reports/Codex/status/night-self-development-latest.json`
+    - `System/Reports/Codex/status/night-self-development-latest.md`
+- [x] Added cron installer for the two nightly windows:
+  - created `System/automation/openclaw/installNightSelfDevelopmentCron.js`
+  - upserts:
+    - `RAZSOC Agent Self-Development Block (0100-0200)`
+    - `RAZSOC Agent Self-Development Block (0500-0600)`
+  - each with isolated session and `timeoutSeconds=3600`.
+- [x] Extended role-governance sync to include nightly evidence and canon targets:
+  - updated `System/automation/razsoc/syncRoleGovernanceDocs.py`
+  - role docs now include `self_development_notes` + `Guidance and Canon Capture Targets`.
+- [x] Updated governance mirrors:
+  - `AGENTS.md`
+  - `BRAIN.md`
+  - `System/Docs/Reference/Inquiry Decision Matrix.md`
+- [x] Seeded upcoming nightly artifacts for 2026-02-23:
+  - per-role notes: `Ops/RAZSOC/agents/nightly/2026-02-23/<ROLE>.md` (40 roles, both windows scaffolded)
+  - overall night log: `Ops/RAZSOC/Logs/2026-02-23-night-self-development.md`
+  - overall night lessons: `Ops/RAZSOC/Lessons/2026-02-23-night-self-development.md`
+
+## Review (2026-02-23) - Night Self-Development Cadence
+- [x] Syntax and schema checks:
+  - `python3 -m py_compile System/automation/razsoc/runNightSelfDevelopmentCadence.py System/automation/razsoc/syncRoleGovernanceDocs.py` -> pass
+  - `node --check System/automation/openclaw/installNightSelfDevelopmentCron.js` -> pass
+  - YAML parse check (`razsoc_policy.yaml`, `razsoc_roles.yaml`) -> `YAML_OK 2`
+- [x] Governance/runtime checks:
+  - `node System/automation/razsoc/workflowLint.js` -> `RAZSOC_WORKFLOW_LINT_OK`
+  - `node System/automation/razsoc/reportingRequirementsLint.js` -> `RAZSOC_REPORTING_REQUIREMENTS_LINT_OK`
+- [x] Template/layer parity after AGENTS/BRAIN updates:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js` -> pass
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> pass
+- [x] Cron install evidence:
+  - `node System/automation/openclaw/installNightSelfDevelopmentCron.js` wrote jobs in `/mnt/c/Users/aleks/.openclaw/cron/jobs.json` with backup.
+- [x] Runtime evidence:
+  - `python3 System/automation/razsoc/runNightSelfDevelopmentCadence.py --window=0100 --tz=America/New_York --date=2026-02-23` -> pass
+  - `python3 System/automation/razsoc/runNightSelfDevelopmentCadence.py --window=0500 --tz=America/New_York --date=2026-02-23` -> pass
+  - `python3 System/automation/razsoc/syncRoleGovernanceDocs.py` -> pass (`roles_total=40`, `files_unchanged=41`).
+
+## Weekly Growth Report - Learning Leverage Upgrade (2026-02-22 23:26 ET)
+- [x] Updated weekly growth template to require explicit learning leverage chain:
+  - `System/Reports/RAZSOC/growth/agent-growth-scoreboard.md` now includes:
+    - leveraged learning refs
+    - applied change this week
+    - growth outcome metric/status delta
+- [x] Updated canonical growth policy contract:
+  - `System/Config/razsoc_policy.yaml` now requires weekly learning leverage application refs and weekly learning-to-growth outcome refs for valid growth claims.
+- [x] Updated governance mirror for operator checks:
+  - `System/Docs/Reference/Inquiry Decision Matrix.md` now includes `Growth Weekly Inquiry` fail-closed rules.
+- [x] Added/upgraded cron installer for weekly growth review prompt contract:
+  - created `System/automation/openclaw/installGrowthWeeklyReviewCron.js`
+  - updated live cron job `RAZSOC 4-Axis Growth Weekly Review` with enforced per-agent chain:
+    - leveraged learning -> applied change -> measurable growth outcome (all evidence-backed).
+
+## Review (2026-02-23) - Weekly Growth Report Learning Leverage Upgrade
+- [x] Validation gates:
+  - `node --check System/automation/openclaw/installGrowthWeeklyReviewCron.js` -> pass
+  - YAML parse check (`System/Config/razsoc_policy.yaml`) -> pass
+  - `node System/automation/razsoc/workflowLint.js` -> `RAZSOC_WORKFLOW_LINT_OK`
+  - `node System/automation/razsoc/reportingRequirementsLint.js` -> `RAZSOC_REPORTING_REQUIREMENTS_LINT_OK`
+- [x] Cron proof:
+  - `node System/automation/openclaw/installGrowthWeeklyReviewCron.js` -> updated existing job id `93b29fb2-d034-4e69-a04b-745c0c3ce998`
+  - live payload now includes `Leveraged learning refs`, `Applied change this week`, and `Growth outcome` requirements in `/mnt/c/Users/aleks/.openclaw/cron/jobs.json`.
+
+## Review (2026-02-23) - Nightly Compound Learning Sync (22:30)
+- [x] Reviewed last-24h chats/sessions (2026-02-22/23) for missed regressions.
+- [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (pwsh vs powershell launcher preflight; explicit mixed-shell selection + artifact trace).
+- [x] No AGENTS.md update required (lessons-level reinforcement sufficient; no durable governance delta).
