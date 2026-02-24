@@ -1,5 +1,28 @@
 # Task Plan
 
+## Nightly Compound Review (2026-02-23)
+- [x] Confirm branch state (checkout master only, no pull).
+- [x] Review last 24h chats/sessions for missed learnings.
+- [x] Update lessons.md with concrete anti-regression rules.
+- [x] Update AGENTS/.agents.md only if durable instruction change is warranted (no new durable instruction found).
+- [ ] Commit & push if files changed.
+- [ ] Append concise review note to todo.md.
+
+## BOOT.md Boot-Check Contract Hardening (2026-02-24)
+- [x] Update `BOOT.md` with explicit boot-check trigger and hardened output contract.
+- [x] Add message-tool destination field rules (`target`, not `to`) and preserve fail-safe boot behavior.
+- [x] Run template sync/validation and capture evidence.
+
+## Review (2026-02-24) - BOOT.md Boot-Check Contract Hardening
+- [x] Updated `BOOT.md`:
+  - added governance frontmatter fields (`updated_on`, `status`, `owner_role`, `decision_ref`)
+  - added explicit boot-check trigger string
+  - kept exact local breadcrumb command unchanged
+  - added message-tool contract and exact `NO_REPLY` reply contract
+- [x] Validation evidence:
+  - `node System/automation/openclaw/syncOpenClawTemplateStack.js` -> PASS
+  - `node System/automation/openclaw/validateOpenClawLayerStack.js` -> FAIL (pre-existing external drift in `/mnt/c/Users/aleks/.openclaw/gateway.cmd`: missing lines `if /I "%CD%"=="C:\\Windows\\System32" cd /d "%USERPROFILE%"` and `title OpenClaw Gateway`)
+
 ## HyperAgent Assimilation + Obsidian Integration (2026-02-21)
 - [x] Assimilate upstream source into managed path (`System/_codex_downloads/hyperagent`).
 - [x] Add canonical runtime controller (`System/automation/openclaw/hyperAgentManage.sh`) and Obsidian capture adapter (`System/automation/openclaw/hyperAgentObsidianIngest.js` + fixture).
@@ -813,3 +836,39 @@ eferences/, scripts/scratchpad.js).
 - [x] Reviewed last-24h chat/session outputs (2026-02-20/21) for missed regressions.
 - [x] Added anti-regression rules to `System/Reports/Codex/tasks/lessons.md` (diagnostic-command allowlist discipline; pwsh-safe Python multiline execution).
 - [x] No AGENTS.md change made (lessons-level reinforcement sufficient; no durable governance delta required).
+
+## Review (2026-02-21) - Nightly Auto-Ship (23:00) Build Phase
+- [x] Ran local-only sync path (`git checkout master`) with no pull.
+- [x] Evaluated backlog for highest-priority unchecked implementation item.
+- [x] `rg "^- \[ \]" System/Reports/Codex/tasks/todo.md` returned no unchecked items.
+- [x] **No-op recorded**: no actionable unchecked implementation tasks existed, so branch/commit/push/PR steps were skipped by instruction.
+
+## Review (2026-02-23) - Canonical Freshness Pass (20:17 ET)
+- [x] Executed canonical freshness pass across Duty Board + runlog + approvals queue + todo ledger.
+- [x] Captured same-cycle evidence in System/Reports/Codex/tasks/checkpoints/canonical-freshness-pass-20260223-201712.md.
+- [x] Appended runlog + duty board closeout entries for this pass.
+
+## RAZSOC Guidance/Instruction Drift Reconciliation (2026-02-24)
+- [x] Audit RAZSOC guidance/instruction surfaces for stale model/reasoning defaults.
+- [x] Update canonical docs to policy `model_policy v1.2` adaptive posture (`high` supervisor baseline, `xhigh` exception-only).
+- [x] Align OpenClaw LAN/VPS example runtime defaults to policy `runtime_defaults_expected`.
+- [x] Re-run template sync and governance validators.
+
+## Review (2026-02-24) - RAZSOC Guidance/Instruction Drift Reconciliation
+- [x] Updated canonical docs: `MUSCLES.md`, `System/Docs/README.md`, `System/Docs/Guides/OpenClaw + Obsidian Integration.md`, `System/Docs/Guides/OpenClaw + PKM Routing Table.md`, `System/Docs/Reference/Directives.md`, `System/Docs/Reference/Agent Governance Alignment.md`, `System/Docs/Reference/HQ Admin Governance Brief v1.0.md`, `System/Docs/Reference/HQ Roles & Responsibilities Matrix v1.0.md`.
+- [x] Updated runtime example configs: `System/Config/openclaw-lan/openclaw.json.example`, `System/Config/openclaw-vps/openclaw.json.example`, `System/Config/openclaw-lan/.env.example`, `System/Config/openclaw-vps/.env.example`.
+- [x] Validation: `syncOpenClawTemplateStack.js` PASS; `validateOpenClawLayerStack.js` PASS; `validateGovernanceConformance.js` PASS; `reportingRequirementsLint.js` PASS.
+- [x] Residual known fail remains unchanged: `workflowLint.js` (`ANNOUNCE_SIGNATURE_CONTRACT_MISSING` + `MISSION_CONTROL_CONTRACT_PARITY_FAIL` runlog signatures).
+
+## Workflow Lint Hard-Fail Remediation (2026-02-24)
+- [x] Diagnose `workflowLint.js` fail signatures (`ANNOUNCE_SIGNATURE_CONTRACT_MISSING`, `MISSION_CONTROL_CONTRACT_PARITY_FAIL`).
+- [x] Restore runlog command-surface parity marker for latest runlog parsing contract.
+- [x] Update reply-lint exact-stdout announce exemption map for current cron job id.
+- [x] Re-run parity and lint gates to green.
+
+## Review (2026-02-24) - Workflow Lint Hard-Fail Remediation
+- [x] Updated `System/automation/razsoc/workflowLint.js` known exact-stdout announce job ids to include `f3f8a9ec-3571-4797-aedd-0927ea6dd9d7` (RAZSOC Reply Lint replacement id).
+- [x] Updated latest runlog `Ops/RAZSOC/Logs/2026-02-23-runlog.md` with canonical parity line: default-model alignment closed, contract-parity closed, diagnostics quarantine active.
+- [x] Validation: `missionControlContractParity.js --check` PASS (`MISSION_CONTROL_CONTRACT_PARITY_OK`, banner `CLEAR`).
+- [x] Validation: `workflowLint.js` PASS (`RAZSOC_WORKFLOW_LINT_OK`).
+- [x] Regression checks: `validateOpenClawLayerStack.js` PASS; `reportingRequirementsLint.js` PASS.

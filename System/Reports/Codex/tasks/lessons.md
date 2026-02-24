@@ -1,6 +1,8 @@
 # Lessons
 
 - For any `delivery.mode=announce` cron job, enforce the transport identity-header contract in the prompt (`CCDR → reports to Raz (SECWAR) → session: agent:main:cron:<job_id>`) with exact exemptions only for `NO_REPLY`/`HEARTBEAT_OK`; otherwise response-lint drift will recur.
+- When Raz clarifies role intent (for example `N6 = IT/coding function`), update canonical policy + role contracts + mirrors explicitly; do not leave wording narrowed to runtime-only language.
+- Do not leave `xhigh` as a broad default across role lanes; set economical per-role floors and enforce adaptive upshift/downshift triggers so reasoning spend matches task risk.
 - VS Code background tasks: problemMatcher must be schema-valid (regexp + file/line/column groups). Otherwise VS Code errors with "description can't be converted into a problem matcher". Use a proper pattern or remove the matcher.
 - When a user corrects a path or naming detail (e.g., `TaskNotes/_Archive`), immediately update configs and any plan/spec text to match the corrected path.
 - For Obsidian callouts, use the official foldable syntax (`> [!type]-`) and verify against docs before reformatting chat outputs.
@@ -16,3 +18,7 @@
 - When searching paths containing spaces (for example `RAZSOC Duty Board.md`), quote paths or use `rg --glob` to avoid false missing-file errors on Windows.
 - For diagnostic-only cron prompts with explicit command allowlists, execute only the listed checks; do not add extra file reads/skill loads/sweeps that expand scope or leak internals.
 - On pwsh hosts, if Python multiline logic is needed, use `python -c` or write a temp `.py` file; never use bash heredoc forms (`python - <<'PY'`).
+- If `openclaw gateway` is stuck in `Queued` state, check Scheduled Task battery settings first (DisallowStartIfOnBatteries/StopIfGoingOnBatteries/StartWhenAvailable); queued + on-battery requires AC or elevated task-setting update.
+- Avoid dual-controller drift: do not run the Gateway Watchdog scheduled task in parallel with the main Gateway task; pick a single controller or restarts will timeout on port conflicts.
+- When patching OpenClaw memory sync for `EMFILE`, replace unbounded `Promise.all(files.map(...))` with bounded concurrency (`runWithConcurrency(..., getIndexConcurrency())`) to prevent file-handle exhaustion.
+- If `openclaw gateway status` parsing breaks after wrapper edits, ensure `gateway.cmd` guard/title lines remain compatible; use `rem` or quoted paths rather than removing required lines.
