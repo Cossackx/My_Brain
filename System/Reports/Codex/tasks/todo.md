@@ -10,6 +10,15 @@
 - [ ] Run verification gates (relevant linters/validators) and capture outputs.
 - [ ] Update runlog/duty-board entries and append review notes with supervisor-validation references.
 
+## Review (2026-02-26) - Nightly Auto-Ship (23:00) Build Phase
+- [x] Checked out master only (no pull) and created branch: `compound/2026-02-17-accountability-intake`.
+- [x] Read 2026-02-25 accountability report + morning summary; captured evidence anchors in `todo.md`.
+- [x] Commit: `a0d0c43` (Document accountability report intake).
+- [x] Pushed branch to origin.
+- [ ] Draft PR not opened: `gh auth login` required (GH_TOKEN missing).
+- Checks run: none (doc update only).
+- Remaining risks: reply-lint drift items + remediation checklist still pending; PR creation blocked by missing GitHub auth.
+
 ## Review (2026-02-26) - N2 Topic Watch
 - N2 Topic Watch brief: System/RAZSOC/Ops/RAZSOC/Briefs/2026-02-26 N2 Topic Watch - openclaw-ecosystem-execution-patterns-and-integr.md (material_change=yes)
 
