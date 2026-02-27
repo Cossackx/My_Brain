@@ -1,5 +1,14 @@
 # Lessons
 
+- OpenClaw in WSL must proxy to Windows runtime by default (`cmd.exe /c openclaw ...`), otherwise Windows-style workspace paths (`C:\...`) get treated as relative on Linux and mutate into `/mnt/.../C:\...`.
+- If path-hygiene scans run in WSL while OpenClaw is Windows-proxied, treat unset `OPENCLAW_WORKSPACE` as non-violation when `openclaw status --all` confirms `OS: windows`.
+- In WSL, never let OpenClaw rely on Windows-style `agents.defaults.workspace` without `OPENCLAW_WORKSPACE`; this composes mixed-root paths (`/mnt/.../C:\...`) and can create Obsidian-invalid glyph directories (`C...`).
+- In WSL diagnostics, normalize Windows backslash paths (`C:\\...`) before filesystem probes; slash-only converters create false-missing results and bogus EACCES/missing signatures.
+- Telegram `getUpdates` 409 drift can persist even when local runtime is healthy if another controller exists; for deterministic maintenance validation, isolate to one active controller or temporarily disable local Telegram polling.
+- Free-space warning gates should keep headroom above threshold, not exactly at threshold; target at least ~0.1GB buffer over the warning floor to avoid strict-gate flapping between runs.
+- Policy-only declarations drift if diagnostics registry parity is not enforced; whenever a new guard is added in `razsoc_policy.yaml`, add the check implementation + registry mapping + latest-alias coverage in the same change.
+- For Windows OpenClaw runtime stability, treat `workspace-state.json` writeability and single-gateway listener count as first-class fail-closed gates, not advisory telemetry.
+- Mixed-root signatures (`C:\\mnt\\c`) must be scanned directly from recent runtime logs; static config lint alone will miss active runtime path composition drift.
 - For any `delivery.mode=announce` cron job, enforce the transport identity-header contract in the prompt (`CCDR → reports to Raz (SECWAR) → session: agent:main:cron:<job_id>`) with exact exemptions only for `NO_REPLY`/`HEARTBEAT_OK`; otherwise response-lint drift will recur.
 - When Raz clarifies role intent (for example `N6 = IT/coding function`), update canonical policy + role contracts + mirrors explicitly; do not leave wording narrowed to runtime-only language.
 - Do not leave `xhigh` as a broad default across role lanes; set economical per-role floors and enforce adaptive upshift/downshift triggers so reasoning spend matches task risk.
@@ -22,3 +31,14 @@
 - Avoid dual-controller drift: do not run the Gateway Watchdog scheduled task in parallel with the main Gateway task; pick a single controller or restarts will timeout on port conflicts.
 - When patching OpenClaw memory sync for `EMFILE`, replace unbounded `Promise.all(files.map(...))` with bounded concurrency (`runWithConcurrency(..., getIndexConcurrency())`) to prevent file-handle exhaustion.
 - If `openclaw gateway status` parsing breaks after wrapper edits, ensure `gateway.cmd` guard/title lines remain compatible; use `rem` or quoted paths rather than removing required lines.
+- For cross-context Windows/WSL automation, hard-lock command packets to canonical vault-relative paths and reject mixed-root signatures (`/mnt/c/.../C:\...`); validate with multi-pass checks (`workflowLint`, `warRoomSnapshot`, strict diagnostics) before closeout.
+- When upgrading Windows-global OpenClaw from WSL, use a single native `cmd.exe /c npm ...` install lane; overlapping npm installs can leave temporary `.openclaw-*` shim files and remove `openclaw.cmd` until repaired.
+- After OpenClaw version upgrades, run `openclaw status --all` immediately for config-schema drift; plugin-entry references that were valid in prior versions may become hard validation blockers and prevent gateway start until removed.
+- `openclaw sessions cleanup` does not necessarily remove orphan `*.jsonl`; for real disk reclamation, compare `sessions.json` referenced `sessionId`s vs session transcript filenames and prune unreferenced files with a manifest.
+- After editing governance/guidance files that mirror into OpenClaw templates, run `node System/automation/openclaw/syncOpenClawTemplateStack.js` before `validateOpenClawLayerStack.js`; otherwise hash/missing-template drift can appear as false blockers.
+- For simple vault edits (append/notes), avoid `exec` to prevent approval prompts; use `edit`/`write` directly unless a true gated action is required.
+- For exact-text replacements (`oldText/newText`), run idempotent preflight: verify anchor exists, treat desired-state-present as `already_applied` (not error), and re-read/re-anchor once before escalating to RFI.
+- When explaining startup memory load order, explicitly separate hot bootstrap context (`today+yesterday`) from long-term recall/indexing (`MEMORY.md`, `memory/*`, lessons/decisions) to avoid implying a 48-hour learning window.
+- If the user explicitly overrides “quarantine-first” cleanup and requests hard deletion, execute delete-only cleanup but immediately rebuild a minimal validated corpus when source artifacts still exist.
+- When `rg` against OneDrive-backed paths throws `The cloud file provider is not running (os error 362)`, rerun with narrowed targets (or `--no-messages`) and/or start the OneDrive provider before treating the search as authoritative.
+- Nightly self-development lessons/logs must include required typed-memory frontmatter (`object_type`, `source_session`, `evidence_ref`) — run schema validation and fix missing frontmatter same-day, not later.

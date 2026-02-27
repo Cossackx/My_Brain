@@ -1,5 +1,30 @@
 # Task Plan
 
+## Fix 37 Non-Compliant Agents (2026-02-26)
+- [ ] Read daily accountability report + executive summary to identify all non-compliant lanes and required evidence.
+- [ ] Read reply-lint drift report and enumerate the 3 violations.
+- [ ] Classify fixes per lane (policy/doc/code/runtime) and create a remediation checklist per agent/lane.
+- [ ] Execute remediations (scripts/config/doc fixes) with evidence links.
+- [ ] Run verification gates (relevant linters/validators) and capture outputs.
+- [ ] Update runlog/duty-board entries and append review notes with supervisor-validation references.
+
+## Review (2026-02-26) - N2 Topic Watch
+- N2 Topic Watch brief: System/RAZSOC/Ops/RAZSOC/Briefs/2026-02-26 N2 Topic Watch - openclaw-ecosystem-execution-patterns-and-integr.md (material_change=yes)
+
+## Nightly Compound Review (2026-02-26)
+- [x] Confirm branch state (checkout master only, no pull).
+- [x] Review last 24h chats/sessions for missed learnings (note any schema/ingest drift).
+- [x] Update lessons.md with concrete anti-regression rules.
+- [x] Update AGENTS/.agents.md only if durable instruction change is warranted.
+- [ ] Commit & push if files changed (commit done; push blocked: non-fast-forward, pull forbidden).
+- [x] Append concise review note to todo.md.
+
+## Review (2026-02-26) - Nightly Compound Learning Sync (22:30)
+- Reviewed last-24h memory logs; no new chat entries in `memory/GPT_Chat_2026-02-26.md` and memory schema validator flags missing frontmatter in nightly self-development notes.
+- Added lessons for OneDrive `rg` failures (cloud file provider not running) and for nightly self-development frontmatter requirements.
+- No durable instruction change warranted in AGENTS.md.
+- Blocker: `git push origin master` rejected (non-fast-forward). Instruction forbids pull; needs manual remote reconcile.
+
 ## Nightly Compound Review (2026-02-23)
 - [x] Confirm branch state (checkout master only, no pull).
 - [x] Review last 24h chats/sessions for missed learnings.
@@ -872,3 +897,20 @@ eferences/, scripts/scratchpad.js).
 - [x] Validation: `missionControlContractParity.js --check` PASS (`MISSION_CONTROL_CONTRACT_PARITY_OK`, banner `CLEAR`).
 - [x] Validation: `workflowLint.js` PASS (`RAZSOC_WORKFLOW_LINT_OK`).
 - [x] Regression checks: `validateOpenClawLayerStack.js` PASS; `reportingRequirementsLint.js` PASS.
+
+## OpenClaw EMFILE Incident Remediation (2026-02-27)
+- [x] Diagnose runtime `EMFILE: too many open files` failures from `memory sync`.
+- [x] Confirm memory index fanout source and file-count blast radius.
+- [x] Apply OpenClaw memory-search config mitigation with backup.
+- [x] Capture restart/verification runbook for operator handoff.
+
+## Review (2026-02-27) - OpenClaw EMFILE Incident Remediation
+- [x] Root cause confirmed: `agents.defaults.memorySearch.extraPaths` included `System/RAZSOC/Ops/RAZSOC/Sessions` (~9701 markdown files), and runtime indexing path uses unbounded `Promise.all` file reads in OpenClaw manager memory sync.
+- [x] Updated `C:\\Users\\aleks\\.openclaw\\openclaw.json` (backup: `openclaw.json.bak-emfile-2026-02-27T03-13-44-291Z`) to stabilize indexing:
+- [x] `memorySearch.sources=["memory"]`, `experimental.sessionMemory=false`, `sync.onSessionStart=false`, `sync.onSearch=false`, `sync.watch=false`, `sync.intervalMinutes=60`, session deltas raised (`500000` bytes / `200` messages).
+- [x] Reduced extra-path blast radius to high-signal lanes only: `Decisions`, `Lessons`, `Risks`, `Snapshots`, `Sessions/transcripts/daily`.
+- [x] Post-change indexed markdown scope estimate: memory `131` + Decisions `103` + Lessons `82` + daily transcripts `3` (no full `Sessions` tree scan).
+- [x] Per operator override, executed direct hard-delete (no quarantine) of `System/RAZSOC/Ops/RAZSOC/Sessions/transcripts/*.md` (`9705` files removed).
+- [x] Rebuilt a lean, properly formatted transcript set from active JSONL source using `node System/automation/agent-memory/openclawSessionImporter.js` after state reset.
+- [x] Post-rebuild validation: `80` transcript markdown files present, `0` frontmatter/required-field format violations.
+- [x] Pruned now-empty transcript-daily extra path from OpenClaw memorySearch config (backup: `openclaw.json.bak-prune-2026-02-27T03-16-56-464Z`).
