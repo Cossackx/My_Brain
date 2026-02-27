@@ -4,7 +4,11 @@
 - [x] Read daily accountability report + executive summary to identify all non-compliant lanes and required evidence.
   - Summary: 2026-02-25 report + morning summary read; compliant 2, non-compliant 37.
   - Primary evidence anchors: Ops/RAZSOC/Logs/2026-02-25-runlog.md; Ops/RAZSOC/Logs/2026-02-25-ccdr-insight-command.md; System/Reports/RAZSOC/response-lint-2026-02-25_191356.md; System/Reports/RAZSOC/pkm-note-lint-2026-02-25_181535.md.
-- [ ] Read reply-lint drift report and enumerate the 3 violations.
+- [x] Read reply-lint drift report and enumerate the 3 violations.
+  - Report shows 2 violations (permission_style) in `fba2384b-36e3-4aba-800d-f05a112c4180.jsonl`:
+    - "Not necessarily... If you want it to display `agent-CCDR`, we can rename or create a new agent..."
+    - "Quick update... Want me to open the report and fix?"
+  - Note: report counts 2 violations (not 3).
 - [ ] Classify fixes per lane (policy/doc/code/runtime) and create a remediation checklist per agent/lane.
 - [ ] Execute remediations (scripts/config/doc fixes) with evidence links.
 - [ ] Run verification gates (relevant linters/validators) and capture outputs.
@@ -13,6 +17,7 @@
 ## Review (2026-02-26) - Nightly Auto-Ship (23:00) Build Phase
 - [x] Checked out master only (no pull) and created branch: `compound/2026-02-17-accountability-intake`.
 - [x] Read 2026-02-25 accountability report + morning summary; captured evidence anchors in `todo.md`.
+- [x] Read reply-lint report; noted 2 permission_style violations (report lists 2, not 3).
 - [x] Commit: `a0d0c43` (Document accountability report intake).
 - [x] Pushed branch to origin.
 - [ ] Draft PR not opened: `gh auth login` required (GH_TOKEN missing).
