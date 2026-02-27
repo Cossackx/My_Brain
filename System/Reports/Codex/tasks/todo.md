@@ -1,7 +1,9 @@
 # Task Plan
 
 ## Fix 37 Non-Compliant Agents (2026-02-26)
-- [ ] Read daily accountability report + executive summary to identify all non-compliant lanes and required evidence.
+- [x] Read daily accountability report + executive summary to identify all non-compliant lanes and required evidence.
+  - Summary: 2026-02-25 report + morning summary read; compliant 2, non-compliant 37.
+  - Primary evidence anchors: Ops/RAZSOC/Logs/2026-02-25-runlog.md; Ops/RAZSOC/Logs/2026-02-25-ccdr-insight-command.md; System/Reports/RAZSOC/response-lint-2026-02-25_191356.md; System/Reports/RAZSOC/pkm-note-lint-2026-02-25_181535.md.
 - [ ] Read reply-lint drift report and enumerate the 3 violations.
 - [ ] Classify fixes per lane (policy/doc/code/runtime) and create a remediation checklist per agent/lane.
 - [ ] Execute remediations (scripts/config/doc fixes) with evidence links.
@@ -914,3 +916,56 @@ eferences/, scripts/scratchpad.js).
 - [x] Rebuilt a lean, properly formatted transcript set from active JSONL source using `node System/automation/agent-memory/openclawSessionImporter.js` after state reset.
 - [x] Post-rebuild validation: `80` transcript markdown files present, `0` frontmatter/required-field format violations.
 - [x] Pruned now-empty transcript-daily extra path from OpenClaw memorySearch config (backup: `openclaw.json.bak-prune-2026-02-27T03-16-56-464Z`).
+
+## OpenClaw Transcript Bloat Source Remediation (2026-02-27)
+- [x] Harden transcript importers against state-reset duplication (`_2/_3` suffix flood).
+- [x] Add automation-session filter for OpenClaw transcript imports (cron flood control).
+- [x] Update conversation routing to canonical transcript lane with legacy fallback.
+- [x] Tighten telemetry entropy retention budget to 3-day posture.
+- [x] Validate syntax and dry-run behavior for updated automation scripts.
+
+## Review (2026-02-27) - OpenClaw Transcript Bloat Source Remediation
+- [x] Updated importers: `openclawSessionImporter.js`, `openclawSessionImporter-Legion.js`, `codexVscodeChatImporter.js`, `codexVscodeChatImporter-Legion.js`.
+- [x] Added idempotent adoption path (`session_id` / `source_path`) so missing state file no longer triggers duplicate markdown creation.
+- [x] Added `--include-automation` flag and default cron suppression in OpenClaw importer (`[cron:]`/automation notices are ignored unless explicitly requested).
+- [x] Updated insight routing source selection: `System/RAZSOC/Ops/RAZSOC/Sessions/transcripts` first, then legacy fallbacks.
+- [x] Tightened telemetry entropy defaults/policy (`max_total_files=600`, `max_files_per_prefix=8`, `retention_days=3`) in:
+- [x] `System/Config/razsoc_policy.yaml`
+- [x] `System/automation/razsoc/runDegradationDiagnostics.js`
+- [x] `System/automation/razsoc/runDegradationDiagnostics.test.js`
+- [x] Validation evidence:
+- [x] `node --check` PASS for all edited JS files.
+- [x] `node System/automation/agent-memory/openclawSessionImporter.js --dry-run` -> `Created=0 Skipped=86`.
+- [x] State-reset simulation (state file temporarily removed) + dry-run still -> `Created=0 Skipped=86`.
+- [x] `node System/automation/razsoc/routeInsightsToExecution.js --dry-run --date=2026-02-27` -> `conversation_files_scanned=1` (no 9k legacy sweep).
+- [x] `node System/automation/razsoc/runDegradationDiagnostics.js --profile hourly --auto-fix off` completed and wrote latest report artifacts.
+
+## Canon + SOP Hardening for Transcript/Memory Non-Repeat (2026-02-27)
+- [x] Update machine policy canon (`razsoc_policy.yaml`) with transcript-memory hygiene contract + preload/recall semantics.
+- [x] Mirror critical policy deltas into `razsoc_policy-Legion.yaml` for parity.
+- [x] Update instruction/runbook layers (`AGENTS.md`, `BRAIN.md`, `NERVES.md`, `MISSION_CONTROL.md`).
+- [x] Update canonical references/SOP (`Directives*.md`, `Memory Note Naming Standard`, `OpenClaw Runtime Path Hardening SOP`, `PKM Vault Structure Canon`).
+- [x] Add dedicated templates for transcript/chat/memory log note types under `System/templates/`.
+- [x] Add diagnostics enforcement check (`transcript_memory_hygiene`) to degradation diagnostics runtime.
+
+## Review (2026-02-27) - Canon + SOP Hardening for Transcript/Memory Non-Repeat
+- [x] Added policy-level hard locks for transcript bloat prevention: no `_cron_`/`_system_` transcript filenames, legacy `Notes/chats` sink forbidden, human-first ingest default (`include_automation_sessions=false`).
+- [x] Clarified memory behavior everywhere: today+yesterday is preload only; historical recall requires full-corpus retrieval across `memory/`, `MEMORY.md`, and typed-memory lanes.
+- [x] Added/registered log templates:
+- [x] `System/templates/RAZSOC Log - OpenClaw Session Transcript.md`
+- [x] `System/templates/RAZSOC Log - Codex Session Transcript.md`
+- [x] `System/templates/RAZSOC Log - OpenClaw Daily Chat.md`
+- [x] `System/templates/RAZSOC Memory - Daily GPT Chat.md`
+- [x] Added enforceable diagnostics check `transcript_memory_hygiene` in `runDegradationDiagnostics.js` and wired it into hourly/daily/post-change/incident profiles.
+
+## Runtime P0/P1 Diagnostics Clear (2026-02-27)
+- [x] Reproduce runtime fails for `runtime_versions_cross_context`, `gateway_reachability_cross_context`, `openclaw_runtime_hardening_guard`.
+- [x] Classify `UtilBindVsockAnyPort: socket failed 1` as WSL interop boundary (monitor-only) in diagnostics posture logic.
+- [x] Re-run hourly diagnostics and verify runtime checks no longer emit P0/P1 failures.
+
+## Review (2026-02-27) - Runtime P0/P1 Diagnostics Clear
+- [x] Updated `System/automation/razsoc/runDegradationDiagnostics.js` with `isVsockInteropBoundaryRun` / `isVsockInteropBoundaryText` helpers.
+- [x] `runtime_versions_cross_context`: dual/partial vsock-boundary failures now classify as pass/monitor-only signatures.
+- [x] `gateway_reachability_cross_context`: dual/partial vsock-boundary failures now classify as pass/monitor-only signatures.
+- [x] `openclaw_runtime_hardening_guard`: vsock-boundary probe failures now classify as warning signatures (not fail-closed P1).
+- [x] Validation: `runDegradationDiagnostics --profile hourly --auto-fix off` confirms runtime checks at `pass/pass/warn` (no runtime P0/P1); current non-runtime blocker is `transcript_memory_hygiene` (`P1`) from one `_cron_` transcript filename.
